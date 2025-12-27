@@ -94,8 +94,9 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass-panel rounded-xl px-4 py-3 w-auto max-w-md"
+      className="fixed bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none"
     >
+      <div className="glass-panel rounded-xl px-4 py-3 pointer-events-auto">
       {/* Top Row - Date and Time Display */}
       <div className="flex items-center justify-center gap-3 mb-2">
         <span className="text-xs font-medium text-foreground">
@@ -176,6 +177,7 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
             </button>
           );
         })}
+      </div>
       </div>
     </motion.div>
   );

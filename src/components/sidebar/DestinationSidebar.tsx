@@ -17,7 +17,7 @@ export default function DestinationSidebar({
   onDestinationClick,
   activeVillage,
 }: DestinationSidebarProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // Default to closed
 
   return (
     <>
@@ -49,7 +49,7 @@ export default function DestinationSidebar({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed left-0 top-0 bottom-0 z-20 w-[264px] glass-panel rounded-r-2xl flex flex-col"
+            className="fixed left-0 top-0 bottom-0 z-30 w-[264px] glass-panel rounded-r-2xl flex flex-col"
           >
             {/* Header */}
             <div className="p-4 border-b border-border/50">
