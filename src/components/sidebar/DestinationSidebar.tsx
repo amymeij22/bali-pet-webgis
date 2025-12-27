@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, MapPin, Thermometer } from 'lucide-react';
+import { MapPin, Thermometer } from 'lucide-react';
 import { PET_COLORS, PET_RANGES, PETStandard } from '@/data/dummyData';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -8,14 +8,22 @@ import { useIsMobile } from '@/hooks/use-mobile';
 interface DestinationSidebarProps {
   selectedTime: string;
   petStandard: PETStandard;
-  onDestinationClick: (villageId: string, destinationName: string, villageName: string) => void;
+  onDestinationClick: (
+    villageId: string,
+    destinationName: string,
+    villageName: string
+  ) => void;
   activeVillage?: string | null;
-  villages: Array<{ id: string; village_name: string; destination_name: string | null; kdepum_code: string | null }>;
+  villages: Array<{
+    id: string;
+    village_name: string;
+    destination_name: string | null;
+    kdepum_code: string | null;
+  }>;
   choropleth: Map<string, { pet_value: number }>;
 }
 
 export default function DestinationSidebar({
-  selectedTime,
   petStandard,
   onDestinationClick,
   activeVillage,
@@ -23,139 +31,157 @@ export default function DestinationSidebar({
   choropleth,
 }: DestinationSidebarProps) {
   const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(!isMobile); // Open by default on desktop, closed on mobile
+  const [isOpen, setIsOpen] = useState(!isMobile);
 
-  // Update open state when switching between mobile/desktop
   useEffect(() => {
     setIsOpen(!isMobile);
   }, [isMobile]);
 
+  const sidebarWidth = isMobile ? 220 : 264;
   const ranges = PET_RANGES[petStandard];
 
   return (
     <>
-      {/* Mobile backdrop to close sidebar when tapping outside */}
+      {/* Backdrop mobile */}
       <AnimatePresence>
         {isMobile && isOpen && (
           <motion.div
-            key="sidebar-backdrop"
+            className="fixed inset-0 z-30 bg-background/30 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-30 md:hidden bg-background/30 backdrop-blur-[2px]"
             onClick={() => setIsOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Toggle Button */}
-      <motion.button
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "fixed top-1/2 -translate-y-1/2 z-40",
-          "glass-panel rounded-r-xl p-1.5 sm:p-2 border-l-0",
-          "hover:bg-secondary/50 transition-colors"
-        )}
-        initial={false}
-        animate={{ left: isOpen ? (isMobile ? 220 : 264) : 0 }}
+      {/* === SIDEBAR + TOGGLE CONTAINER === */}
+      <motion.div
+        className="fixed top-0 left-0 bottom-0 z-40 flex"
+        animate={{ x: isOpen ? 0 : -sidebarWidth }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        aria-label={isOpen ? 'Tutup sidebar' : 'Buka sidebar'}
       >
-        {isOpen ? (
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
-        ) : (
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
-        )}
-      </motion.button>
-
-      {/* Sidebar */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.aside
-            initial={{ x: -280, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -280, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={cn(
-              "fixed left-0 top-0 bottom-0 z-40 glass-panel rounded-r-2xl flex flex-col",
-              isMobile ? "w-[220px]" : "w-[264px]"
-            )}
-          >
-            {/* Header */}
-            <div className="p-3 sm:p-4 border-b border-border/50">
-              <div className="flex items-center gap-2 mb-1">
-                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
-                <h2 className="font-semibold text-sm sm:text-lg text-foreground">Destinasi Wisata</h2>
-              </div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">
-                {villages.length} lokasi wisata di Bali
-              </p>
+        {/* SIDEBAR */}
+        <aside
+          className={cn(
+            'glass-panel flex flex-col rounded-r-2xl z-20',
+            isMobile ? 'w-[220px]' : 'w-[264px]'
+          )}
+        >
+          {/* Header */}
+          <div className="p-3 sm:p-4 border-b border-border/50">
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+              <h2 className="font-semibold text-sm sm:text-lg text-foreground">
+                Destinasi Wisata
+              </h2>
             </div>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">
+              {villages.length} lokasi wisata di Bali
+            </p>
+          </div>
 
-            {/* Destination List */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide p-1.5 sm:p-2">
-              {villages.map((village, index) => {
-                const forecast = choropleth.get(village.id);
-                const isActive = activeVillage === village.id;
-                let category: string | null = null;
-                if (forecast) {
-                  const pet = forecast.pet_value;
-                  for (const [key, range] of Object.entries(ranges)) {
-                    if (pet >= range.min && pet < range.max) {
-                      category = key;
-                      break;
-                    }
+          {/* List */}
+          <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
+            {villages.map((village) => {
+              const forecast = choropleth.get(village.id);
+              const isActive = activeVillage === village.id;
+
+              let category: string | null = null;
+              if (forecast) {
+                for (const [key, range] of Object.entries(ranges)) {
+                  if (
+                    forecast.pet_value >= range.min &&
+                    forecast.pet_value < range.max
+                  ) {
+                    category = key;
+                    break;
                   }
                 }
+              }
 
-                const destinationName = village.destination_name || village.village_name;
-                return (
-                  <motion.button
-                    key={village.id}
-                    onClick={() => onDestinationClick(village.id, destinationName, village.village_name)}
-                    className={cn(
-                      "destination-item w-full text-left flex items-center justify-between gap-1 sm:gap-2",
-                      "p-2 sm:p-2.5",
-                      isActive && "active"
-                    )}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                      <div
-                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 shadow-sm ring-1 ring-border/30"
-                        style={{
-                          backgroundColor: category
-                            ? PET_COLORS[category as keyof typeof PET_COLORS]
-                            : '#cccccc',
-                        }}
-                      />
-                      <span className="truncate text-xs sm:text-sm font-medium">{destinationName}</span>
+              const destinationName =
+                village.destination_name || village.village_name;
+
+              return (
+                <button
+                  key={village.id}
+                  onClick={() =>
+                    onDestinationClick(
+                      village.id,
+                      destinationName,
+                      village.village_name
+                    )
+                  }
+                  className={cn(
+                    'destination-item w-full flex items-center justify-between gap-2 p-2 rounded-lg text-left',
+                    isActive && 'active'
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{
+                        backgroundColor: category
+                          ? PET_COLORS[
+                              category as keyof typeof PET_COLORS
+                            ]
+                          : '#ccc',
+                      }}
+                    />
+                    <span className="truncate text-xs sm:text-sm font-medium">
+                      {destinationName}
+                    </span>
+                  </div>
+
+                  {forecast && (
+                    <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
+                      <Thermometer className="w-3 h-3" />
+                      <span className="font-mono">
+                        {forecast.pet_value}°
+                      </span>
                     </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
 
-                    {forecast && (
-                      <div className="flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-                        <Thermometer className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                        <span className="font-mono">{forecast.pet_value}°</span>
-                      </div>
-                    )}
-                  </motion.button>
-                );
-              })}
-            </div>
+          {/* Footer */}
+          <div className="p-2 border-t border-border/50 bg-secondary/30 text-center">
+            <p className="text-[9px] sm:text-xs text-muted-foreground">
+              Klik destinasi untuk melihat detail
+            </p>
+          </div>
+        </aside>
 
-            {/* Footer */}
-            <div className="p-2 sm:p-3 border-t border-border/50 bg-secondary/30">
-              <p className="text-[9px] sm:text-xs text-muted-foreground text-center">
-                Klik destinasi untuk melihat detail
-              </p>
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
+        {/* TOGGLE BUTTON */}
+        <button
+          onClick={() => setIsOpen((v) => !v)}
+          className="
+            absolute top-1/2 -right-8 -translate-y-1/2
+            z-10
+            bg-card border border-border shadow-sm
+            rounded-r-2xl
+            px-2 py-3
+            sm:px-3 sm:py-5
+            hover:bg-secondary/60 transition-colors
+          "
+          aria-label="Toggle sidebar"
+        >
+          <span
+            className="
+              text-[10px] sm:text-xs
+              font-semibold uppercase tracking-wider
+              text-foreground
+              select-none
+            "
+            style={{ writingMode: 'vertical-rl' }}
+          >
+            DESTINASI
+          </span>
+        </button>
+      </motion.div>
     </>
   );
 }
