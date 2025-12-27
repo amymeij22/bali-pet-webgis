@@ -108,28 +108,28 @@ export const VISITOR_NOTES: Record<ThermalCategory, string> = {
   very_cold: 'Gunakan jaket tebal dan layering. Lindungi ekstremitas dari udara dingin.',
 };
 
-// Destinasi wisata dengan KDEBPS sesuai GeoJSON
+// Destinasi wisata dengan KDEPUM sesuai GeoJSON (bukan KDEBPS karena KDEBPS null di data)
 export const VILLAGES: Village[] = [
-  { id: '51.03.01.1002', village_name: 'Kuta', destination_name: 'Pantai Kuta', kdebps: '51.03.01.1002', center: [115.1667, -8.7167] },
-  { id: '51.03.05.1004', village_name: 'Benoa', destination_name: 'Pantai Nusa Dua', kdebps: '51.03.05.1004', center: [115.2333, -8.7917] },
-  { id: '51.02.06.2004', village_name: 'Beraban', destination_name: 'Pura Tanah Lot', kdebps: '51.02.06.2004', center: [115.0861, -8.6211] },
-  { id: '51.04.06.2002', village_name: 'Tegallalang', destination_name: 'Tegallalang Rice Terrace', kdebps: '51.04.06.2002', center: [115.2625, -8.4333] },
-  { id: '51.04.05.1005', village_name: 'Ubud', destination_name: 'Monkey Forest Ubud', kdebps: '51.04.05.1005', center: [115.2625, -8.5069] },
-  { id: '51.06.04.2029', village_name: 'Kintamani', destination_name: 'Danau Batur (Kintamani)', kdebps: '51.06.04.2029', center: [115.3833, -8.2417] },
-  { id: '51.02.09.2008', village_name: 'Candikuning', destination_name: 'Danau Beratan (Bedugul)', kdebps: '51.02.09.2008', center: [115.1667, -8.2750] },
-  { id: '51.04.01.2008', village_name: 'Kemenuh', destination_name: 'Air Terjun Tegenungan', kdebps: '51.04.01.2008', center: [115.2889, -8.5750] },
+  { id: '5103011002', village_name: 'Kuta', destination_name: 'Pantai Kuta', kdebps: '5103011002', center: [115.1667, -8.7167] },
+  { id: '5103051004', village_name: 'Benoa', destination_name: 'Pantai Nusa Dua', kdebps: '5103051004', center: [115.2333, -8.7917] },
+  { id: '5102062004', village_name: 'Beraban', destination_name: 'Pura Tanah Lot', kdebps: '5102062004', center: [115.0861, -8.6211] },
+  { id: '5104062002', village_name: 'Tegallalang', destination_name: 'Tegallalang Rice Terrace', kdebps: '5104062002', center: [115.2625, -8.4333] },
+  { id: '5104051005', village_name: 'Ubud', destination_name: 'Monkey Forest Ubud', kdebps: '5104051005', center: [115.2625, -8.5069] },
+  { id: '5106042029', village_name: 'Kintamani', destination_name: 'Danau Batur (Kintamani)', kdebps: '5106042029', center: [115.3833, -8.2417] },
+  { id: '5102092008', village_name: 'Candikuning', destination_name: 'Danau Beratan (Bedugul)', kdebps: '5102092008', center: [115.1667, -8.2750] },
+  { id: '5104012008', village_name: 'Kemenuh', destination_name: 'Air Terjun Tegenungan', kdebps: '5104012008', center: [115.2889, -8.5750] },
 ];
 
-// Village name mapping for GeoJSON matching by KDEBPS
-export const VILLAGE_KDEBPS_MAP: Record<string, string> = {
-  '51.03.01.1002': 'Pantai Kuta',
-  '51.03.05.1004': 'Pantai Nusa Dua',
-  '51.02.06.2004': 'Pura Tanah Lot',
-  '51.04.06.2002': 'Tegallalang Rice Terrace',
-  '51.04.05.1005': 'Monkey Forest Ubud',
-  '51.06.04.2029': 'Danau Batur (Kintamani)',
-  '51.02.09.2008': 'Danau Beratan (Bedugul)',
-  '51.04.01.2008': 'Air Terjun Tegenungan',
+// Village name mapping for GeoJSON matching by KDEPUM (formatted without dots to match normalized ID)
+export const VILLAGE_KDEPUM_MAP: Record<string, string> = {
+  '5103011002': 'Pantai Kuta',
+  '5103051004': 'Pantai Nusa Dua',
+  '5102062004': 'Pura Tanah Lot',
+  '5104062002': 'Tegallalang Rice Terrace',
+  '5104051005': 'Monkey Forest Ubud',
+  '5106042029': 'Danau Batur (Kintamani)',
+  '5102092008': 'Danau Beratan (Bedugul)',
+  '5104012008': 'Air Terjun Tegenungan',
 };
 
 // Generate forecast times (3 hours interval, 3 days)
@@ -182,14 +182,14 @@ const WIND_TO_DIRECTIONS = ['S', 'SW', 'W', 'NW', 'N', 'NE', 'E', 'SE'];
 
 // Dummy forecast data based on user's example - different for each location and time
 const BASE_FORECASTS: Record<string, { baseT: number; baseHu: number; basePET: number; elevation: 'coastal' | 'highland' | 'midland' }> = {
-  '51.03.01.1002': { baseT: 26, baseHu: 87, basePET: 25.5, elevation: 'coastal' }, // Pantai Kuta
-  '51.03.05.1004': { baseT: 27, baseHu: 85, basePET: 26.8, elevation: 'coastal' }, // Pantai Nusa Dua
-  '51.02.06.2004': { baseT: 26, baseHu: 82, basePET: 27.2, elevation: 'coastal' }, // Tanah Lot
-  '51.04.06.2002': { baseT: 24, baseHu: 80, basePET: 24.5, elevation: 'midland' }, // Tegallalang
-  '51.04.05.1005': { baseT: 25, baseHu: 78, basePET: 25.2, elevation: 'midland' }, // Ubud
-  '51.06.04.2029': { baseT: 20, baseHu: 75, basePET: 19.0, elevation: 'highland' }, // Kintamani
-  '51.02.09.2008': { baseT: 21, baseHu: 82, basePET: 20.5, elevation: 'highland' }, // Bedugul
-  '51.04.01.2008': { baseT: 25, baseHu: 83, basePET: 26.0, elevation: 'midland' }, // Tegenungan
+  '5103011002': { baseT: 26, baseHu: 87, basePET: 25.5, elevation: 'coastal' }, // Pantai Kuta
+  '5103051004': { baseT: 27, baseHu: 85, basePET: 26.8, elevation: 'coastal' }, // Pantai Nusa Dua
+  '5102062004': { baseT: 26, baseHu: 82, basePET: 27.2, elevation: 'coastal' }, // Tanah Lot
+  '5104062002': { baseT: 24, baseHu: 80, basePET: 24.5, elevation: 'midland' }, // Tegallalang
+  '5104051005': { baseT: 25, baseHu: 78, basePET: 25.2, elevation: 'midland' }, // Ubud
+  '5106042029': { baseT: 20, baseHu: 75, basePET: 19.0, elevation: 'highland' }, // Kintamani
+  '5102092008': { baseT: 21, baseHu: 82, basePET: 20.5, elevation: 'highland' }, // Bedugul
+  '5104012008': { baseT: 25, baseHu: 83, basePET: 26.0, elevation: 'midland' }, // Tegenungan
 };
 
 // Generate dummy forecast batch

@@ -7,7 +7,7 @@ import {
   WeatherForecast, 
   getForecastsByTime,
   VILLAGES,
-  VILLAGE_KDEBPS_MAP,
+  VILLAGE_KDEPUM_MAP,
   PETStandard,
   getThermalCategory,
 } from '@/data/dummyData';
@@ -46,14 +46,16 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     }
   }, [selectedTime]);
 
-  // Get village ID from feature using KDEBPS
+  // Get village ID from feature using KDEPUM (normalized without dots)
   const getVillageId = useCallback((feature: GeoJSON.Feature): string | null => {
     const props = feature.properties || {};
-    const kdebps = props.KDEBPS || props.kdebps;
-    
-    // Check if this KDEBPS matches our destination list
-    if (kdebps && VILLAGE_KDEBPS_MAP[kdebps]) {
-      return kdebps;
+    // Use KDEPUM and normalize (remove dots)
+    const kdepum = props.KDEPUM || props.kdepum;
+    if (kdepum) {
+      const normalizedId = kdepum.replace(/\./g, '');
+      if (VILLAGE_KDEPUM_MAP[normalizedId]) {
+        return normalizedId;
+      }
     }
     return null;
   }, []);
@@ -61,12 +63,12 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
   // Get village name from feature
   const getVillageName = useCallback((feature: GeoJSON.Feature): string => {
     const villageId = getVillageId(feature);
-    if (villageId && VILLAGE_KDEBPS_MAP[villageId]) {
-      return VILLAGE_KDEBPS_MAP[villageId];
+    if (villageId && VILLAGE_KDEPUM_MAP[villageId]) {
+      return VILLAGE_KDEPUM_MAP[villageId];
     }
     
     const props = feature.properties || {};
-    return props.DESA || props.KELURAHAN || props.NAMA || 'Unknown';
+    return props.WADMKD || props.NAMOBJ || props.DESA || props.KELURAHAN || props.NAMA || 'Unknown';
   }, [getVillageId]);
 
   // Check if feature is a destination
