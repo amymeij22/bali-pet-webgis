@@ -6,6 +6,7 @@ import PETLegend from '@/components/controls/PETLegend';
 import TimeSlider from '@/components/controls/TimeSlider';
 import WeatherPopup from '@/components/popup/WeatherPopup';
 import MapHeader from '@/components/header/MapHeader';
+import DataSourceCard from '@/components/controls/DataSourceCard';
 import { FORECAST_TIMES, PETStandard, getForecast, VILLAGES } from '@/data/dummyData';
 
 const Index = () => {
@@ -79,6 +80,9 @@ const Index = () => {
         selectedTime={selectedTime}
         onTimeChange={handleTimeChange}
       />
+
+      {/* Data Source Card */}
+      <DataSourceCard />
 
       {/* Weather Popup */}
       <AnimatePresence>
