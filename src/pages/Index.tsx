@@ -12,10 +12,12 @@ const Index = () => {
   // State
   const [selectedTime, setSelectedTime] = useState<string>(FORECAST_TIMES[0]);
   const [petStandard, setPetStandard] = useState<PETStandard>('tropical');
-  const [activeVillage, setActiveVillage] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  const [activeVillage, setActiveVillage] = useState<
+    {
+      id: string;
+      name: string;
+    } | null
+  >(null);
   const [showPopup, setShowPopup] = useState(false);
 
   // Handlers
@@ -50,6 +52,7 @@ const Index = () => {
       {/* Full-bleed Map */}
       <LeafletMap
         selectedTime={selectedTime}
+        petStandard={petStandard}
         onVillageClick={handleVillageClick}
         highlightedVillage={activeVillage?.id}
       />
@@ -60,6 +63,7 @@ const Index = () => {
       {/* Left Sidebar - Destination List */}
       <DestinationSidebar
         selectedTime={selectedTime}
+        petStandard={petStandard}
         onDestinationClick={handleVillageClick}
         activeVillage={activeVillage?.id}
       />
@@ -113,18 +117,6 @@ const Index = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Attribution Badge */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="fixed bottom-20 right-4 z-10"
-      >
-        <div className="glass-panel rounded-lg px-2 py-1 text-[10px] text-muted-foreground">
-          BMKG × STMKG
-        </div>
-      </motion.div>
     </div>
   );
 };

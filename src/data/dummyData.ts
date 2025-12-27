@@ -3,6 +3,8 @@
 export interface Village {
   id: string;
   village_name: string;
+  destination_name: string;
+  kdebps: string;
   center: [number, number]; // [lng, lat]
 }
 
@@ -19,15 +21,26 @@ export interface WeatherForecast {
   village_id: string;
   batch_id: string;
   forecast_time: string;
-  temperature: number;
-  humidity: number;
-  wind_speed: number;
-  wind_direction: string;
-  weather_condition: string;
-  visibility: string;
+  local_datetime: string;
+  t: number; // temperature
+  hu: number; // humidity
+  ws: number; // wind speed km/h
+  wd: string; // wind direction
+  wd_deg: number; // wind direction degrees
+  wd_to: string; // wind direction to
+  tcc: number; // total cloud cover
+  weather: number; // weather code
+  weather_desc: string; // weather description
+  weather_desc_en: string;
+  tp: number; // precipitation
+  vs: number; // visibility meters
+  vs_text: string; // visibility text
+  time_index: string;
   pet_value: number;
-  thermal_category: ThermalCategory;
-  thermal_sensation_scale: number;
+  thermal_category_temperate: ThermalCategory;
+  thermal_category_tropical: ThermalCategory;
+  class_temperate: string;
+  class_tropical: string;
 }
 
 export type ThermalCategory =
@@ -82,19 +95,6 @@ export const PET_RANGES: Record<PETStandard, Record<ThermalCategory, { min: numb
   },
 };
 
-// Thermal sensation scale mapping
-export const SENSATION_SCALE: Record<ThermalCategory, number> = {
-  very_hot: 4,
-  hot: 3,
-  warm: 2,
-  slight_warm: 1,
-  neutral: 0,
-  slight_cool: -1,
-  cool: -2,
-  cold: -3,
-  very_cold: -4,
-};
-
 // Visitor notes sesuai PRD
 export const VISITOR_NOTES: Record<ThermalCategory, string> = {
   very_hot: 'Gunakan sunscreen SPF 30+, topi lebar, dan hidrasi setiap 15-20 menit. Hindari aktivitas berat siang hari.',
@@ -108,33 +108,28 @@ export const VISITOR_NOTES: Record<ThermalCategory, string> = {
   very_cold: 'Gunakan jaket tebal dan layering. Lindungi ekstremitas dari udara dingin.',
 };
 
-// Dummy villages - These IDs will be matched with GeoJSON properties
-// We use indices (0-9) as IDs which will match the feature index in GeoJSON
+// Destinasi wisata dengan KDEBPS sesuai GeoJSON
 export const VILLAGES: Village[] = [
-  { id: '0', village_name: 'Kuta', center: [115.1667, -8.7167] },
-  { id: '1', village_name: 'Ubud', center: [115.2625, -8.5069] },
-  { id: '2', village_name: 'Seminyak', center: [115.1583, -8.6917] },
-  { id: '3', village_name: 'Sanur', center: [115.2639, -8.6917] },
-  { id: '4', village_name: 'Nusa Dua', center: [115.2333, -8.7917] },
-  { id: '5', village_name: 'Jimbaran', center: [115.1611, -8.7833] },
-  { id: '6', village_name: 'Canggu', center: [115.1333, -8.6500] },
-  { id: '7', village_name: 'Lovina', center: [115.0250, -8.1500] },
-  { id: '8', village_name: 'Amed', center: [115.6417, -8.3417] },
-  { id: '9', village_name: 'Tanah Lot', center: [115.0861, -8.6211] },
+  { id: '51.03.01.1002', village_name: 'Kuta', destination_name: 'Pantai Kuta', kdebps: '51.03.01.1002', center: [115.1667, -8.7167] },
+  { id: '51.03.05.1004', village_name: 'Benoa', destination_name: 'Pantai Nusa Dua', kdebps: '51.03.05.1004', center: [115.2333, -8.7917] },
+  { id: '51.02.06.2004', village_name: 'Beraban', destination_name: 'Pura Tanah Lot', kdebps: '51.02.06.2004', center: [115.0861, -8.6211] },
+  { id: '51.04.06.2002', village_name: 'Tegallalang', destination_name: 'Tegallalang Rice Terrace', kdebps: '51.04.06.2002', center: [115.2625, -8.4333] },
+  { id: '51.04.05.1005', village_name: 'Ubud', destination_name: 'Monkey Forest Ubud', kdebps: '51.04.05.1005', center: [115.2625, -8.5069] },
+  { id: '51.06.04.2029', village_name: 'Kintamani', destination_name: 'Danau Batur (Kintamani)', kdebps: '51.06.04.2029', center: [115.3833, -8.2417] },
+  { id: '51.02.09.2008', village_name: 'Candikuning', destination_name: 'Danau Beratan (Bedugul)', kdebps: '51.02.09.2008', center: [115.1667, -8.2750] },
+  { id: '51.04.01.2008', village_name: 'Kemenuh', destination_name: 'Air Terjun Tegenungan', kdebps: '51.04.01.2008', center: [115.2889, -8.5750] },
 ];
 
-// Village name mapping for GeoJSON matching
-export const VILLAGE_NAME_MAP: Record<string, string> = {
-  'Kuta': '0',
-  'Ubud': '1', 
-  'Seminyak': '2',
-  'Sanur': '3',
-  'Nusa Dua': '4',
-  'Jimbaran': '5',
-  'Canggu': '6',
-  'Lovina': '7',
-  'Amed': '8',
-  'Tanah Lot': '9',
+// Village name mapping for GeoJSON matching by KDEBPS
+export const VILLAGE_KDEBPS_MAP: Record<string, string> = {
+  '51.03.01.1002': 'Pantai Kuta',
+  '51.03.05.1004': 'Pantai Nusa Dua',
+  '51.02.06.2004': 'Pura Tanah Lot',
+  '51.04.06.2002': 'Tegallalang Rice Terrace',
+  '51.04.05.1005': 'Monkey Forest Ubud',
+  '51.06.04.2029': 'Danau Batur (Kintamani)',
+  '51.02.09.2008': 'Danau Beratan (Bedugul)',
+  '51.04.01.2008': 'Air Terjun Tegenungan',
 };
 
 // Generate forecast times (3 hours interval, 3 days)
@@ -151,37 +146,51 @@ function generateForecastTimes(): string[] {
   return times;
 }
 
-// Random thermal category generator with seed for consistency
+// Random with seed for consistency
 function seededRandom(seed: number): number {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
-function getRandomCategory(seed: number): ThermalCategory {
-  const categories: ThermalCategory[] = [
-    'neutral', 'neutral', 'neutral', // weighted towards neutral
-    'slight_warm', 'slight_warm',
-    'warm', 'warm',
-    'hot',
-    'slight_cool',
-    'cool',
-  ];
-  const index = Math.floor(seededRandom(seed) * categories.length);
-  return categories[index];
+// Get thermal category based on PET value and standard
+function getCategoryFromPET(petValue: number, standard: PETStandard): ThermalCategory {
+  const ranges = PET_RANGES[standard];
+  for (const [category, range] of Object.entries(ranges)) {
+    if (petValue >= range.min && petValue < range.max) {
+      return category as ThermalCategory;
+    }
+  }
+  return 'neutral';
 }
 
-// Generate PET value based on category (tropical standard)
-function getPETValueForCategory(category: ThermalCategory, seed: number): number {
-  const ranges = PET_RANGES.tropical[category];
-  const min = Math.max(ranges.min, 14);
-  const max = Math.min(ranges.max, 45);
-  return Math.round((min + seededRandom(seed + 1) * (max - min)) * 10) / 10;
-}
+// Weather descriptions mapping
+const WEATHER_MAP: Record<number, { desc: string; desc_en: string }> = {
+  0: { desc: 'Cerah', desc_en: 'Clear' },
+  1: { desc: 'Cerah Berawan', desc_en: 'Partly Cloudy' },
+  2: { desc: 'Cerah Berawan', desc_en: 'Partly Cloudy' },
+  3: { desc: 'Berawan', desc_en: 'Mostly Cloudy' },
+  4: { desc: 'Berawan Tebal', desc_en: 'Overcast' },
+  5: { desc: 'Hujan Ringan', desc_en: 'Light Rain' },
+  60: { desc: 'Hujan Ringan', desc_en: 'Light Rain' },
+  61: { desc: 'Hujan Sedang', desc_en: 'Moderate Rain' },
+  63: { desc: 'Hujan Lebat', desc_en: 'Heavy Rain' },
+  95: { desc: 'Hujan Petir', desc_en: 'Thunderstorm' },
+};
 
-// Weather conditions
-const WEATHER_CONDITIONS = ['Cerah', 'Cerah Berawan', 'Berawan', 'Berawan Tebal', 'Hujan Ringan', 'Hujan Sedang'];
 const WIND_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-const VISIBILITY_OPTIONS = ['Baik', 'Sedang', 'Buruk'];
+const WIND_TO_DIRECTIONS = ['S', 'SW', 'W', 'NW', 'N', 'NE', 'E', 'SE'];
+
+// Dummy forecast data based on user's example - different for each location and time
+const BASE_FORECASTS: Record<string, { baseT: number; baseHu: number; basePET: number; elevation: 'coastal' | 'highland' | 'midland' }> = {
+  '51.03.01.1002': { baseT: 26, baseHu: 87, basePET: 25.5, elevation: 'coastal' }, // Pantai Kuta
+  '51.03.05.1004': { baseT: 27, baseHu: 85, basePET: 26.8, elevation: 'coastal' }, // Pantai Nusa Dua
+  '51.02.06.2004': { baseT: 26, baseHu: 82, basePET: 27.2, elevation: 'coastal' }, // Tanah Lot
+  '51.04.06.2002': { baseT: 24, baseHu: 80, basePET: 24.5, elevation: 'midland' }, // Tegallalang
+  '51.04.05.1005': { baseT: 25, baseHu: 78, basePET: 25.2, elevation: 'midland' }, // Ubud
+  '51.06.04.2029': { baseT: 20, baseHu: 75, basePET: 19.0, elevation: 'highland' }, // Kintamani
+  '51.02.09.2008': { baseT: 21, baseHu: 82, basePET: 20.5, elevation: 'highland' }, // Bedugul
+  '51.04.01.2008': { baseT: 25, baseHu: 83, basePET: 26.0, elevation: 'midland' }, // Tegenungan
+};
 
 // Generate dummy forecast batch
 export const FORECAST_BATCH: ForecastBatch = {
@@ -195,31 +204,86 @@ export const FORECAST_BATCH: ForecastBatch = {
 // Generate all forecast times
 export const FORECAST_TIMES = generateForecastTimes();
 
-// Generate dummy weather forecasts with deterministic seeding
+// Generate dummy weather forecasts with realistic variation
 export function generateWeatherForecasts(): WeatherForecast[] {
   const forecasts: WeatherForecast[] = [];
   let idCounter = 1;
 
   VILLAGES.forEach((village, villageIdx) => {
+    const base = BASE_FORECASTS[village.id] || { baseT: 26, baseHu: 80, basePET: 25.0, elevation: 'midland' };
+    
     FORECAST_TIMES.forEach((time, timeIdx) => {
       const seed = villageIdx * 100 + timeIdx;
-      const category = getRandomCategory(seed);
-      const petValue = getPETValueForCategory(category, seed);
+      const date = new Date(time);
+      const hour = date.getHours();
+      
+      // Time-based temperature variation
+      let tempVariation = 0;
+      if (hour >= 6 && hour < 12) {
+        tempVariation = (hour - 6) * 0.5; // Morning warming
+      } else if (hour >= 12 && hour < 15) {
+        tempVariation = 3 + seededRandom(seed) * 2; // Peak afternoon
+      } else if (hour >= 15 && hour < 18) {
+        tempVariation = 2 - (hour - 15) * 0.5; // Afternoon cooling
+      } else {
+        tempVariation = -2 + seededRandom(seed); // Evening/night cooler
+      }
+      
+      const t = Math.round((base.baseT + tempVariation + seededRandom(seed) * 2 - 1) * 10) / 10;
+      const hu = Math.round(base.baseHu + seededRandom(seed + 1) * 10 - 5);
+      const ws = Math.round((10 + seededRandom(seed + 2) * 15) * 10) / 10;
+      const wdIndex = Math.floor(seededRandom(seed + 3) * WIND_DIRECTIONS.length);
+      const wd = WIND_DIRECTIONS[wdIndex];
+      const wd_to = WIND_TO_DIRECTIONS[wdIndex];
+      const wd_deg = Math.round(seededRandom(seed + 4) * 360);
+      const tcc = Math.round(60 + seededRandom(seed + 5) * 40);
+      const weatherCode = hour >= 12 && hour < 18 && seededRandom(seed + 6) > 0.6 
+        ? (seededRandom(seed + 7) > 0.7 ? 61 : 60) 
+        : Math.floor(seededRandom(seed + 8) * 4);
+      const weather = WEATHER_MAP[weatherCode] || WEATHER_MAP[3];
+      const tp = weatherCode >= 60 ? Math.round(seededRandom(seed + 9) * 5 * 10) / 10 : 0;
+      const vs = Math.round(8000 + seededRandom(seed + 10) * 4000);
+      
+      // PET calculation with time variation
+      let petVariation = tempVariation * 0.8;
+      if (base.elevation === 'highland') {
+        petVariation -= 2;
+      } else if (base.elevation === 'coastal') {
+        petVariation += 1;
+      }
+      
+      const pet = Math.round((base.basePET + petVariation + seededRandom(seed + 11) * 3 - 1.5) * 100) / 100;
+      
+      const categoryTemperate = getCategoryFromPET(pet, 'temperate');
+      const categoryTropical = getCategoryFromPET(pet, 'tropical');
+      
+      const localDate = new Date(date.getTime() + 8 * 60 * 60 * 1000); // WITA = UTC+8
       
       forecasts.push({
         id: `wf-${idCounter++}`,
         village_id: village.id,
         batch_id: FORECAST_BATCH.id,
         forecast_time: time,
-        temperature: Math.round((24 + seededRandom(seed + 2) * 10) * 10) / 10,
-        humidity: Math.round(60 + seededRandom(seed + 3) * 30),
-        wind_speed: Math.round((5 + seededRandom(seed + 4) * 20) * 10) / 10,
-        wind_direction: WIND_DIRECTIONS[Math.floor(seededRandom(seed + 5) * WIND_DIRECTIONS.length)],
-        weather_condition: WEATHER_CONDITIONS[Math.floor(seededRandom(seed + 6) * WEATHER_CONDITIONS.length)],
-        visibility: VISIBILITY_OPTIONS[Math.floor(seededRandom(seed + 7) * 3)],
-        pet_value: petValue,
-        thermal_category: category,
-        thermal_sensation_scale: SENSATION_SCALE[category],
+        local_datetime: localDate.toISOString().replace('T', ' ').slice(0, 19),
+        t,
+        hu,
+        ws,
+        wd,
+        wd_deg,
+        wd_to,
+        tcc,
+        weather: weatherCode,
+        weather_desc: weather.desc,
+        weather_desc_en: weather.desc_en,
+        tp,
+        vs,
+        vs_text: vs < 10000 ? '< 10 km' : '> 10 km',
+        time_index: `${hour}-${(hour + 3) % 24}`,
+        pet_value: pet,
+        thermal_category_temperate: categoryTemperate,
+        thermal_category_tropical: categoryTropical,
+        class_temperate: PET_RANGES.temperate[categoryTemperate].labelId + ` (${PET_RANGES.temperate[categoryTemperate].min}-${PET_RANGES.temperate[categoryTemperate].max === 999 ? '∞' : PET_RANGES.temperate[categoryTemperate].max})`,
+        class_tropical: PET_RANGES.tropical[categoryTropical].labelId + ` (${PET_RANGES.tropical[categoryTropical].min}-${PET_RANGES.tropical[categoryTropical].max === 999 ? '∞' : PET_RANGES.tropical[categoryTropical].max})`,
       });
     });
   });
@@ -246,23 +310,17 @@ export function getForecastsByTime(forecastTime: string): Map<string, WeatherFor
   return map;
 }
 
-// Get village by name
-export function getVillageIdByName(name: string): string | undefined {
-  // Try exact match first
-  if (VILLAGE_NAME_MAP[name]) {
-    return VILLAGE_NAME_MAP[name];
-  }
-  // Try case-insensitive match
-  const lowerName = name.toLowerCase();
-  for (const [villageName, id] of Object.entries(VILLAGE_NAME_MAP)) {
-    if (villageName.toLowerCase() === lowerName) {
-      return id;
-    }
-  }
-  return undefined;
+// Get village by KDEBPS
+export function getVillageByKdebps(kdebps: string): Village | undefined {
+  return VILLAGES.find(v => v.kdebps === kdebps);
 }
 
 // Get village by ID
 export function getVillageById(id: string): Village | undefined {
   return VILLAGES.find(v => v.id === id);
+}
+
+// Get thermal category based on current standard
+export function getThermalCategory(forecast: WeatherForecast, standard: PETStandard): ThermalCategory {
+  return standard === 'temperate' ? forecast.thermal_category_temperate : forecast.thermal_category_tropical;
 }
