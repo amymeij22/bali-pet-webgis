@@ -1,14 +1,24 @@
+<<<<<<< HEAD
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
+=======
+User-agent: *
+Disallow: /
+
+# Allow social scrapers to access for link previews
+>>>>>>> a00c07e (update ui)
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
+<<<<<<< HEAD
 
 User-agent: *
 Allow: /
+=======
+>>>>>>> a00c07e (update ui)

@@ -97,6 +97,11 @@ const Index = () => {
                 handlePopupClose();
               }
             }}
+<<<<<<< HEAD
+=======
+            role="presentation"
+            aria-modal="true"
+>>>>>>> a00c07e (update ui)
           >
             {/* Backdrop */}
             <motion.div
@@ -104,6 +109,10 @@ const Index = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+<<<<<<< HEAD
+=======
+              onClick={() => handlePopupClose()}
+>>>>>>> a00c07e (update ui)
             />
 
             {/* Popup */}

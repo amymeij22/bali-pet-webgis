@@ -28,11 +28,32 @@ export default function DestinationSidebar({
 
   return (
     <>
+<<<<<<< HEAD
+=======
+      {/* Mobile backdrop to close sidebar when tapping outside */}
+      <AnimatePresence>
+        {isMobile && isOpen && (
+          <motion.div
+            key="sidebar-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-30 md:hidden bg-background/30 backdrop-blur-[2px]"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+>>>>>>> a00c07e (update ui)
       {/* Toggle Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
+<<<<<<< HEAD
           "fixed top-1/2 -translate-y-1/2 z-30",
+=======
+          "fixed top-1/2 -translate-y-1/2 z-40",
+>>>>>>> a00c07e (update ui)
           "glass-panel rounded-r-xl p-1.5 sm:p-2 border-l-0",
           "hover:bg-secondary/50 transition-colors"
         )}
@@ -57,7 +78,11 @@ export default function DestinationSidebar({
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={cn(
+<<<<<<< HEAD
               "fixed left-0 top-0 bottom-0 z-30 glass-panel rounded-r-2xl flex flex-col",
+=======
+              "fixed left-0 top-0 bottom-0 z-40 glass-panel rounded-r-2xl flex flex-col",
+>>>>>>> a00c07e (update ui)
               isMobile ? "w-[220px]" : "w-[264px]"
             )}
           >

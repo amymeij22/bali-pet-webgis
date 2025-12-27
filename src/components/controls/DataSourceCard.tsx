@@ -50,7 +50,11 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4 }}
         onClick={() => setIsOpen(true)}
+<<<<<<< HEAD
         className="md:hidden fixed bottom-20 right-4 z-20 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+=======
+        className="md:hidden fixed left-4 bottom-4 z-30 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+>>>>>>> a00c07e (update ui)
         aria-label="Lihat sumber data"
       >
         <Info className="w-5 h-5 text-muted-foreground" />
@@ -73,6 +77,10 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+<<<<<<< HEAD
+=======
+              onClick={() => setIsOpen(false)}
+>>>>>>> a00c07e (update ui)
             />
             <motion.div
               initial={{ y: 100, opacity: 0 }}

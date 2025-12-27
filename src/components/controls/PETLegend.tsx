@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+<<<<<<< HEAD
 import { Info, X } from 'lucide-react';
+=======
+import { X } from 'lucide-react';
+>>>>>>> a00c07e (update ui)
 import {
   PET_COLORS,
   PET_RANGES,
@@ -14,11 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+<<<<<<< HEAD
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+=======
+>>>>>>> a00c07e (update ui)
 
 interface PETLegendProps {
   standard: PETStandard;
@@ -45,6 +52,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
     <>
       {/* Header with Standard Selector */}
       <div className="flex items-center justify-between mb-3">
+<<<<<<< HEAD
         <div className="flex items-center gap-1.5">
           <span className="text-xs sm:text-sm font-semibold text-foreground">Standar PET</span>
           <Tooltip>
@@ -58,6 +66,9 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
             </TooltipContent>
           </Tooltip>
         </div>
+=======
+        <span className="text-xs sm:text-sm font-semibold text-foreground">Standar PET</span>
+>>>>>>> a00c07e (update ui)
       </div>
 
       {/* Standard Selector */}
@@ -104,9 +115,15 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
     <>
       {/* Desktop: Always visible */}
       <motion.div
+<<<<<<< HEAD
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+=======
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.15, duration: 0.14, ease: 'easeOut' }}
+>>>>>>> a00c07e (update ui)
         className="hidden md:block fixed right-4 top-4 z-20 map-control w-[200px]"
       >
         <LegendContent />
@@ -116,9 +133,15 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
+<<<<<<< HEAD
         transition={{ delay: 0.2 }}
         onClick={() => setIsMobileOpen(true)}
         className="md:hidden fixed top-28 right-4 z-20 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+=======
+        transition={{ delay: 0.15, duration: 0.12, ease: 'easeOut' }}
+        onClick={() => setIsMobileOpen(true)}
+        className="md:hidden fixed top-1/2 -translate-y-1/2 right-4 z-30 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+>>>>>>> a00c07e (update ui)
         aria-label="Lihat standar PET"
       >
         <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
@@ -133,6 +156,10 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+<<<<<<< HEAD
+=======
+            transition={{ duration: 0.14, ease: 'easeOut' }}
+>>>>>>> a00c07e (update ui)
             className="md:hidden fixed inset-0 z-50 flex items-start justify-end p-4 pt-28"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsMobileOpen(false);
@@ -142,6 +169,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+<<<<<<< HEAD
               className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
             />
             <motion.div
@@ -149,6 +177,17 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 100, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+=======
+              transition={{ duration: 0.12, ease: 'easeOut' }}
+              className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+              onClick={() => setIsMobileOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.14, ease: 'easeOut' }}
+>>>>>>> a00c07e (update ui)
               className="relative z-10 map-control w-[200px]"
             >
               <button
