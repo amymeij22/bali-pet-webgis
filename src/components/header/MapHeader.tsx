@@ -37,8 +37,8 @@ export default function MapHeader() {
             Prediksi Kenyamanan Termal Berbasis Indeks <em className="italic">Physiological Equivalent Temperature</em>
           </span>
 
-          {/* Baris 2 (desktop only) */}
-          <span className="hidden sm:block text-muted-foreground font-normal">
+          {/* Baris 2 */}
+          <span className="block text-muted-foreground font-normal mt-0.5">
             untuk Destinasi Wisata di Provinsi Bali
           </span>
         </h1>
