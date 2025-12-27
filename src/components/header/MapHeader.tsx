@@ -38,7 +38,7 @@ export default function MapHeader() {
           </span>
 
           {/* Baris 2 */}
-          <span className="block text-muted-foreground font-normal mt-0.5">
+          <span className="block">
             untuk Destinasi Wisata di Provinsi Bali
           </span>
         </h1>
