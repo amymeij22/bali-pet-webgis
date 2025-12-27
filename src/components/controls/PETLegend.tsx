@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { Info } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Info, X } from 'lucide-react';
 import {
   PET_COLORS,
   PET_RANGES,
@@ -37,22 +38,18 @@ const CATEGORY_ORDER: ThermalCategory[] = [
 ];
 
 export default function PETLegend({ standard, onStandardChange }: PETLegendProps) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const ranges = PET_RANGES[standard];
 
-  return (
-    <motion.div
-      initial={{ x: 100, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-      className="fixed right-4 top-4 z-20 map-control w-[200px]"
-    >
+  const LegendContent = () => (
+    <>
       {/* Header with Standard Selector */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm font-semibold text-foreground">Standar PET</span>
+          <span className="text-xs sm:text-sm font-semibold text-foreground">Standar PET</span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+              <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground cursor-help" />
             </TooltipTrigger>
             <TooltipContent side="left" className="max-w-[200px]">
               <p className="text-xs">
@@ -89,9 +86,9 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
                 style={{ backgroundColor: color }}
               />
               <div className="flex-1 min-w-0">
-                <span className="text-xs truncate block">{range.labelId}</span>
+                <span className="text-[10px] sm:text-xs truncate block">{range.labelId}</span>
               </div>
-              <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono whitespace-nowrap">
                 {minDisplay}{range.min !== -999 ? range.min : range.max}
                 {range.max !== 999 && ` - ${range.max}`}
                 {maxDisplay}°C
@@ -100,6 +97,71 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
           );
         })}
       </div>
-    </motion.div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop: Always visible */}
+      <motion.div
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+        className="hidden md:block fixed right-4 top-4 z-20 map-control w-[200px]"
+      >
+        <LegendContent />
+      </motion.div>
+
+      {/* Mobile: Overlay button */}
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+        onClick={() => setIsMobileOpen(true)}
+        className="md:hidden fixed top-28 right-4 z-20 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+        aria-label="Lihat standar PET"
+      >
+        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+          <span className="text-[8px] font-bold text-primary-foreground">PET</span>
+        </div>
+      </motion.button>
+
+      {/* Mobile: Overlay modal */}
+      <AnimatePresence>
+        {isMobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 z-50 flex items-start justify-end p-4 pt-28"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setIsMobileOpen(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: 100, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 100, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="relative z-10 map-control w-[200px]"
+            >
+              <button
+                onClick={() => setIsMobileOpen(false)}
+                className="absolute -top-2 -right-2 p-1.5 rounded-full bg-card border border-border shadow-sm hover:bg-secondary/50 transition-colors"
+              >
+                <X className="w-3 h-3 text-muted-foreground" />
+              </button>
+              <LegendContent />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
