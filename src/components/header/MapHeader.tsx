@@ -22,11 +22,7 @@ export default function MapHeader() {
         {logos.map((logo, i) => (
           <div
             key={i}
-<<<<<<< HEAD
-            className="w-10 h-10 sm:w-10 sm:h-10 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm p-1"
-=======
-            className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm p-1"
->>>>>>> a00c07e (update ui)
+            className="w-11 h-11 sm:w-12 sm:h-12 rounded-lg  backdrop-blur-md flex items-center justify-center shadow-sm p-1"
           >
             <img src={logo.src} alt={logo.alt} className="w-full h-full object-contain" />
           </div>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import LeafletMap from '@/components/map/LeafletMap';
 import DestinationSidebar from '@/components/sidebar/DestinationSidebar';
@@ -7,19 +7,76 @@ import TimeSlider from '@/components/controls/TimeSlider';
 import WeatherPopup from '@/components/popup/WeatherPopup';
 import MapHeader from '@/components/header/MapHeader';
 import DataSourceCard from '@/components/controls/DataSourceCard';
-import { FORECAST_TIMES, PETStandard, getForecast, VILLAGES } from '@/data/dummyData';
+import { PETStandard } from '@/data/dummyData';
+import { getLatestBatch, getVillages, getAllForecastsForBatch, WeatherForecast } from '@/data/supabaseQueries';
 
 const Index = () => {
   // State
-  const [selectedTime, setSelectedTime] = useState<string>(FORECAST_TIMES[0]);
+  const [selectedTime, setSelectedTime] = useState<string>('');
   const [petStandard, setPetStandard] = useState<PETStandard>('tropical');
   const [activeVillage, setActiveVillage] = useState<
     {
       id: string;
-      name: string;
+      destinationName: string;
+      villageName: string;
     } | null
   >(null);
   const [showPopup, setShowPopup] = useState(false);
+  const [times, setTimes] = useState<string[]>([]);
+  const [producedAt, setProducedAt] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [villages, setVillages] = useState<Array<{ id: string; village_name: string; destination_name: string | null; kdepum_code: string | null }>>([]);
+  const [forecastsByTime, setForecastsByTime] = useState<Map<string, Map<string, WeatherForecast>>>(new Map());
+  const [choropleth, setChoropleth] = useState<Map<string, { pet_value: number }>>(new Map());
+  const [popupForecast, setPopupForecast] = useState<null | WeatherForecast>(null);
+
+  // Load initial batch, times, and villages
+  useEffect(() => {
+    (async () => {
+      try {
+        const latest = await getLatestBatch();
+        if (!latest) return;
+        const allForecasts = await getAllForecastsForBatch(latest.id);
+        setProducedAt(latest.produced_at);
+
+        // Build times list (sorted)
+        const timeSet = new Set(allForecasts.map((f) => f.forecast_time));
+        const sortedTimes = Array.from(timeSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+        setTimes(sortedTimes);
+        setSelectedTime(sortedTimes[0] ?? '');
+
+        // Group forecasts by time -> village
+        const grouped = new Map<string, Map<string, WeatherForecast>>();
+        allForecasts.forEach((f) => {
+          const map = grouped.get(f.forecast_time) ?? new Map<string, WeatherForecast>();
+          map.set(f.village_id, f);
+          grouped.set(f.forecast_time, map);
+        });
+        setForecastsByTime(grouped);
+
+        const v = await getVillages();
+        setVillages(v);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to init data:', err);
+      }
+    })();
+  }, []);
+
+  // Derive choropleth from cached forecasts when time changes
+  useEffect(() => {
+    if (!selectedTime) return;
+    const timeMap = forecastsByTime.get(selectedTime);
+    if (!timeMap) {
+      setChoropleth(new Map());
+      return;
+    }
+    const map = new Map<string, { pet_value: number }>();
+    timeMap.forEach((forecast, villageId) => {
+      map.set(villageId, { pet_value: forecast.pet_value });
+    });
+    setChoropleth(map);
+  }, [forecastsByTime, selectedTime]);
 
   // Handlers
   const handleTimeChange = useCallback((time: string) => {
@@ -30,8 +87,9 @@ const Index = () => {
     setPetStandard(standard);
   }, []);
 
-  const handleVillageClick = useCallback((villageId: string, villageName: string) => {
-    setActiveVillage({ id: villageId, name: villageName });
+  const handleVillageClick = useCallback((villageId: string, destinationName: string, villageName: string) => {
+    setActiveVillage({ id: villageId, destinationName, villageName });
+    setIsPlaying(false); // pause slider when popup opens
     setShowPopup(true);
   }, []);
 
@@ -43,10 +101,33 @@ const Index = () => {
     }, 300);
   }, []);
 
-  // Get current forecast for popup
-  const currentForecast = activeVillage
-    ? getForecast(activeVillage.id, selectedTime)
-    : null;
+  // Pull popup detail from cached forecasts (no extra DB calls)
+  useEffect(() => {
+    if (!showPopup || !activeVillage || !selectedTime) {
+      setPopupForecast(null);
+      return;
+    }
+    const timeMap = forecastsByTime.get(selectedTime);
+    const detail = timeMap?.get(activeVillage.id) ?? null;
+    setPopupForecast(detail ?? null);
+  }, [showPopup, activeVillage, selectedTime, forecastsByTime]);
+
+  // Memo for villages keyed by KDEPUM (raw & normalized) with both names
+  const villagesByKdepum = useMemo(() => {
+    return Object.fromEntries(
+      villages
+        .filter((v) => v.kdepum_code)
+        .flatMap((v) => {
+          const raw = (v.kdepum_code as string).trim();
+          const normalized = raw.replace(/\D/g, '');
+          const entry = { id: v.id, destinationName: v.destination_name || v.village_name, villageName: v.village_name };
+
+          return normalized && normalized !== raw
+            ? [[raw, entry], [normalized, entry]]
+            : [[raw, entry]];
+        })
+    );
+  }, [villages]);
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -56,6 +137,8 @@ const Index = () => {
         petStandard={petStandard}
         onVillageClick={handleVillageClick}
         highlightedVillage={activeVillage?.id}
+        villagesByKdepum={villagesByKdepum}
+        choropleth={choropleth}
       />
 
       {/* Header */}
@@ -67,6 +150,8 @@ const Index = () => {
         petStandard={petStandard}
         onDestinationClick={handleVillageClick}
         activeVillage={activeVillage?.id}
+        villages={villages}
+        choropleth={choropleth}
       />
 
       {/* Right Panel - PET Legend & Standard Selector */}
@@ -76,10 +161,16 @@ const Index = () => {
       />
 
       {/* Bottom - Time Slider */}
-      <TimeSlider
-        selectedTime={selectedTime}
-        onTimeChange={handleTimeChange}
-      />
+      {times.length > 0 && (
+        <TimeSlider
+          selectedTime={selectedTime}
+          times={times}
+          producedAt={producedAt}
+          isPlaying={isPlaying}
+          onPlayChange={setIsPlaying}
+          onTimeChange={handleTimeChange}
+        />
+      )}
 
       {/* Data Source Card */}
       <DataSourceCard />
@@ -97,11 +188,8 @@ const Index = () => {
                 handlePopupClose();
               }
             }}
-<<<<<<< HEAD
-=======
             role="presentation"
             aria-modal="true"
->>>>>>> a00c07e (update ui)
           >
             {/* Backdrop */}
             <motion.div
@@ -109,19 +197,18 @@ const Index = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
-<<<<<<< HEAD
-=======
               onClick={() => handlePopupClose()}
->>>>>>> a00c07e (update ui)
             />
 
             {/* Popup */}
             <div className="relative z-10">
               <WeatherPopup
-                villageName={activeVillage.name}
+                destinationName={activeVillage.destinationName}
+                villageName={activeVillage.villageName}
                 villageId={activeVillage.id}
-                forecast={currentForecast || null}
+                forecast={popupForecast}
                 currentTime={selectedTime}
+                times={times}
                 standard={petStandard}
                 onClose={handlePopupClose}
                 onTimeChange={handleTimeChange}

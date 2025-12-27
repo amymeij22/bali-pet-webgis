@@ -1,37 +1,33 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
-  PET_COLORS, 
-  ThermalCategory, 
-  WeatherForecast, 
-  getForecastsByTime,
-  VILLAGES,
-  VILLAGE_KDEPUM_MAP,
-  PETStandard,
-  getThermalCategory,
-} from '@/data/dummyData';
+import { PET_COLORS, PET_RANGES, PETStandard } from '@/data/dummyData';
 
 interface LeafletMapProps {
   selectedTime: string;
   petStandard: PETStandard;
-  onVillageClick: (villageId: string, villageName: string) => void;
+  onVillageClick: (villageId: string, destinationName: string, villageName: string) => void;
   highlightedVillage?: string | null;
+  villagesByKdepum: Record<string, { id: string; destinationName: string; villageName: string }>;
+  choropleth: Map<string, { pet_value: number }>;
 }
 
 const BALI_CENTER: [number, number] = [-8.4095, 115.1889];
 const BALI_ZOOM = 10;
+const GEOJSON_PATH = `${import.meta.env.BASE_URL}data/destinasi_wisata_bali.geojson`;
+// Strip any non-digit separators so both "51.03.05.1004" and "5103051004" match
+const normalizeKdepum = (value?: string | null) => value?.replace(/\D/g, '').trim() || null;
 
-export default function LeafletMap({ selectedTime, petStandard, onVillageClick, highlightedVillage }: LeafletMapProps) {
+export default function LeafletMap({ selectedTime, petStandard, onVillageClick, highlightedVillage, villagesByKdepum, choropleth }: LeafletMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const geoJsonLayer = useRef<L.GeoJSON | null>(null);
   const [geoJsonData, setGeoJsonData] = useState<GeoJSON.FeatureCollection | null>(null);
-  const [forecastData, setForecastData] = useState<Map<string, WeatherForecast>>(new Map());
+  const [forecastData, setForecastData] = useState<Map<string, { pet_value: number }>>(new Map());
 
   // Load GeoJSON
   useEffect(() => {
-    fetch('/data/destinasi_wisata_bali.geojson')
+    fetch(GEOJSON_PATH)
       .then((res) => res.json())
       .then((data: GeoJSON.FeatureCollection) => {
         setGeoJsonData(data);
@@ -39,37 +35,39 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       .catch((err) => console.error('Failed to load GeoJSON:', err));
   }, []);
 
-  // Update forecast data when time changes
+  // Update forecast data when choropleth changes
   useEffect(() => {
-    if (selectedTime) {
-      setForecastData(getForecastsByTime(selectedTime));
-    }
-  }, [selectedTime]);
+    setForecastData(choropleth);
+  }, [choropleth]);
 
-  // Get village ID from feature using KDEPUM (normalized without dots)
-  const getVillageId = useCallback((feature: GeoJSON.Feature): string | null => {
+  // Get village info from feature using KDEPUM (normalized)
+  const getVillageInfo = useCallback((feature: GeoJSON.Feature): { id: string; destinationName: string; villageName: string } | null => {
     const props = feature.properties || {};
-    // Use KDEPUM and normalize (remove dots)
-    const kdepum = props.KDEPUM || props.kdepum;
-    if (kdepum) {
-      const normalizedId = kdepum.replace(/\./g, '');
-      if (VILLAGE_KDEPUM_MAP[normalizedId]) {
-        return normalizedId;
-      }
-    }
+    const raw: string | undefined = props.KDEPUM || props.kdepum || props.kdepum_code;
+    const fallback: string | undefined = props.KDCPUM || props.KDCBPS || props.KDBBPS;
+    const normalized = normalizeKdepum(raw);
+    const normalizedFallback = normalizeKdepum(fallback);
+
+    if (normalized && villagesByKdepum[normalized]) return villagesByKdepum[normalized];
+    if (raw && villagesByKdepum[raw]) return villagesByKdepum[raw];
+    if (normalizedFallback && villagesByKdepum[normalizedFallback]) return villagesByKdepum[normalizedFallback];
+    if (fallback && villagesByKdepum[fallback]) return villagesByKdepum[fallback];
+
     return null;
-  }, []);
+  }, [villagesByKdepum]);
+
+  const getVillageId = useCallback((feature: GeoJSON.Feature): string | null => {
+    const info = getVillageInfo(feature);
+    return info?.id ?? null;
+  }, [getVillageInfo]);
 
   // Get village name from feature
   const getVillageName = useCallback((feature: GeoJSON.Feature): string => {
-    const villageId = getVillageId(feature);
-    if (villageId && VILLAGE_KDEPUM_MAP[villageId]) {
-      return VILLAGE_KDEPUM_MAP[villageId];
-    }
-    
     const props = feature.properties || {};
+    const info = getVillageInfo(feature);
+    if (info) return info.destinationName;
     return props.WADMKD || props.NAMOBJ || props.DESA || props.KELURAHAN || props.NAMA || 'Unknown';
-  }, [getVillageId]);
+  }, [getVillageInfo]);
 
   // Check if feature is a destination
   const isDestination = useCallback((feature: GeoJSON.Feature): boolean => {
@@ -95,15 +93,23 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       };
     }
 
-    const forecast = forecastData.get(villageId);
+    const forecast = villageId ? forecastData.get(villageId) : undefined;
     
     if (!forecast) {
       return { fillColor: '#cccccc', weight: 2, color: '#ffffff', fillOpacity: 0.7 };
     }
 
-    // Get category based on current PET standard
-    const category = getThermalCategory(forecast, petStandard);
-    const fillColor = PET_COLORS[category];
+    // Compute category based on PET standard
+    const ranges = PET_RANGES[petStandard];
+    let category: string = 'neutral';
+    const pet = forecast.pet_value;
+    for (const [key, range] of Object.entries(ranges)) {
+      if (pet >= range.min && pet < range.max) {
+        category = key;
+        break;
+      }
+    }
+    const fillColor = PET_COLORS[category as keyof typeof PET_COLORS];
 
     return {
       fillColor,
@@ -157,11 +163,12 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       onEachFeature: (feature, layer) => {
         const villageId = getVillageId(feature);
         const villageName = getVillageName(feature);
+        const info = getVillageInfo(feature);
         const isDest = isDestination(feature);
 
-        if (isDest && villageId) {
+        if (isDest && villageId && info) {
           // Tooltip on hover
-          layer.bindTooltip(villageName, {
+          layer.bindTooltip(info.destinationName, {
             permanent: false,
             direction: 'center',
             className: 'bg-card text-card-foreground px-2 py-1 rounded-lg shadow-lg text-sm font-medium border border-border',
@@ -169,7 +176,7 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
 
           // Click handler
           layer.on('click', () => {
-            onVillageClick(villageId, villageName);
+            onVillageClick(villageId, info.destinationName, info.villageName);
           });
 
           // Hover effects
@@ -195,7 +202,7 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     // Fit bounds to destinations only
     const destinationBounds = L.latLngBounds([]);
     geoJsonData.features.forEach((feature) => {
-      if (isDestination(feature) && feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
+      if (isDestination(feature) && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
         const layer = L.geoJSON(feature);
         destinationBounds.extend(layer.getBounds());
       }
@@ -204,7 +211,7 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     if (destinationBounds.isValid()) {
       map.current.fitBounds(destinationBounds, { padding: [50, 50] });
     }
-  }, [geoJsonData, getStyle, getVillageName, getVillageId, onVillageClick, isDestination]);
+  }, [geoJsonData, getStyle, getVillageName, getVillageId, onVillageClick, isDestination, getVillageInfo]);
 
   // Update styles when forecast data, highlight, or PET standard changes
   useEffect(() => {

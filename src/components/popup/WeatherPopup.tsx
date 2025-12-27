@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import {
   X,
@@ -16,51 +16,52 @@ import {
   CloudRain,
 } from 'lucide-react';
 import {
-  WeatherForecast,
   PET_COLORS,
   PET_RANGES,
   PETStandard,
   VISITOR_NOTES,
-  FORECAST_TIMES,
-  getThermalCategory,
 } from '@/data/dummyData';
+import type { WeatherForecast, ThermalCategory } from '@/data/supabaseQueries';
 import { Button } from '@/components/ui/button';
+import { toWitaDate } from '@/lib/timezone';
 
 interface WeatherPopupProps {
+  destinationName: string;
   villageName: string;
   villageId: string;
   forecast: WeatherForecast | null;
   currentTime: string;
+  times: string[];
   standard: PETStandard;
   onClose: () => void;
   onTimeChange: (time: string) => void;
 }
 
 export default function WeatherPopup({
+  destinationName,
   villageName,
   villageId,
   forecast,
   currentTime,
+  times,
   standard,
   onClose,
   onTimeChange,
 }: WeatherPopupProps) {
-  const currentTimeIndex = useMemo(() => {
-    return FORECAST_TIMES.findIndex((t) => t === currentTime);
-  }, [currentTime]);
+  // Indexing is handled by parent now; we only navigate using provided time
+  const ranges = PET_RANGES[standard];
 
-  const canGoPrev = currentTimeIndex > 0;
-  const canGoNext = currentTimeIndex < FORECAST_TIMES.length - 1;
+  const currentIndex = useMemo(() => times.findIndex((t) => t === currentTime), [times, currentTime]);
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex >= 0 && currentIndex < times.length - 1;
 
   const handlePrev = () => {
-    if (canGoPrev) {
-      onTimeChange(FORECAST_TIMES[currentTimeIndex - 1]);
-    }
+    if (currentIndex > 0) onTimeChange(times[currentIndex - 1]);
   };
 
   const handleNext = () => {
-    if (canGoNext) {
-      onTimeChange(FORECAST_TIMES[currentTimeIndex + 1]);
+    if (currentIndex >= 0 && currentIndex < times.length - 1) {
+      onTimeChange(times[currentIndex + 1]);
     }
   };
 
@@ -84,11 +85,19 @@ export default function WeatherPopup({
     );
   }
 
-  const category = getThermalCategory(forecast, standard);
+  // Compute category based on PET value and selected standard
+  let category: ThermalCategory = forecast.thermal_category;
+  const pet = forecast.pet_value;
+  for (const [key, range] of Object.entries(ranges)) {
+    if (pet >= range.min && pet < range.max) {
+      category = key as ThermalCategory;
+      break;
+    }
+  }
   const petColor = PET_COLORS[category];
   const petRange = PET_RANGES[standard][category];
   const visitorNote = VISITOR_NOTES[category];
-  const forecastDate = parseISO(forecast.forecast_time);
+  const forecastDate = toWitaDate(forecast.forecast_time);
 
   return (
     <motion.div
@@ -101,7 +110,8 @@ export default function WeatherPopup({
       <div className="popup-header relative flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-base text-foreground">{villageName}</h3>
+            <h3 className="font-bold text-base text-foreground">{destinationName}</h3>
+            <p className="text-[11px] text-muted-foreground leading-tight">{villageName}</p>
             <p className="text-xs text-muted-foreground">
               {format(forecastDate, "EEEE, dd MMM yyyy", { locale: id })}
             </p>
@@ -168,43 +178,34 @@ export default function WeatherPopup({
         <WeatherItem
           icon={<Thermometer className="w-3.5 h-3.5" />}
           label="Suhu Udara"
-          value={`${forecast.t}°C`}
+          value={`${forecast.temperature}°C`}
         />
         <WeatherItem
           icon={<Droplets className="w-3.5 h-3.5" />}
           label="Kelembapan"
-          value={`${forecast.hu}%`}
+          value={`${forecast.humidity}%`}
         />
         <WeatherItem
           icon={<Wind className="w-3.5 h-3.5" />}
           label="Kec. Angin"
-          value={`${forecast.ws} km/jam`}
+          value={`${forecast.wind_speed} km/jam`}
         />
         <WeatherItem
           icon={<Compass className="w-3.5 h-3.5" />}
           label="Arah Angin"
-          value={`${forecast.wd} → ${forecast.wd_to}`}
+          value={`${forecast.wind_direction}`}
         />
         <WeatherItem
           icon={<Cloud className="w-3.5 h-3.5" />}
           label="Kondisi"
-          value={forecast.weather_desc}
+          value={forecast.weather_condition}
         />
         <WeatherItem
           icon={<Eye className="w-3.5 h-3.5" />}
           label="Jarak Pandang"
-          value={forecast.vs_text}
+          value={forecast.visibility}
         />
-        <WeatherItem
-          icon={<CloudRain className="w-3.5 h-3.5" />}
-          label="Curah Hujan"
-          value={`${forecast.tp} mm`}
-        />
-        <WeatherItem
-          icon={<Cloud className="w-3.5 h-3.5" />}
-          label="Tutupan Awan"
-          value={`${forecast.tcc}%`}
-        />
+        {/* Optional: precipitation and cloud cover are not in the new schema */}
       </div>
 
       {/* Visitor Notes */}

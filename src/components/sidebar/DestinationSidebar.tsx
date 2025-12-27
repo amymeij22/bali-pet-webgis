@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, MapPin, Thermometer } from 'lucide-react';
-import { VILLAGES, getForecast, PET_COLORS, PETStandard, getThermalCategory } from '@/data/dummyData';
+import { PET_COLORS, PET_RANGES, PETStandard } from '@/data/dummyData';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface DestinationSidebarProps {
   selectedTime: string;
   petStandard: PETStandard;
-  onDestinationClick: (villageId: string, villageName: string) => void;
+  onDestinationClick: (villageId: string, destinationName: string, villageName: string) => void;
   activeVillage?: string | null;
+  villages: Array<{ id: string; village_name: string; destination_name: string | null; kdepum_code: string | null }>;
+  choropleth: Map<string, { pet_value: number }>;
 }
 
 export default function DestinationSidebar({
@@ -17,6 +19,8 @@ export default function DestinationSidebar({
   petStandard,
   onDestinationClick,
   activeVillage,
+  villages,
+  choropleth,
 }: DestinationSidebarProps) {
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(!isMobile); // Open by default on desktop, closed on mobile
@@ -26,10 +30,10 @@ export default function DestinationSidebar({
     setIsOpen(!isMobile);
   }, [isMobile]);
 
+  const ranges = PET_RANGES[petStandard];
+
   return (
     <>
-<<<<<<< HEAD
-=======
       {/* Mobile backdrop to close sidebar when tapping outside */}
       <AnimatePresence>
         {isMobile && isOpen && (
@@ -44,16 +48,11 @@ export default function DestinationSidebar({
         )}
       </AnimatePresence>
 
->>>>>>> a00c07e (update ui)
       {/* Toggle Button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-<<<<<<< HEAD
-          "fixed top-1/2 -translate-y-1/2 z-30",
-=======
           "fixed top-1/2 -translate-y-1/2 z-40",
->>>>>>> a00c07e (update ui)
           "glass-panel rounded-r-xl p-1.5 sm:p-2 border-l-0",
           "hover:bg-secondary/50 transition-colors"
         )}
@@ -78,11 +77,7 @@ export default function DestinationSidebar({
             exit={{ x: -280, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={cn(
-<<<<<<< HEAD
-              "fixed left-0 top-0 bottom-0 z-30 glass-panel rounded-r-2xl flex flex-col",
-=======
               "fixed left-0 top-0 bottom-0 z-40 glass-panel rounded-r-2xl flex flex-col",
->>>>>>> a00c07e (update ui)
               isMobile ? "w-[220px]" : "w-[264px]"
             )}
           >
@@ -93,21 +88,31 @@ export default function DestinationSidebar({
                 <h2 className="font-semibold text-sm sm:text-lg text-foreground">Destinasi Wisata</h2>
               </div>
               <p className="text-[10px] sm:text-xs text-muted-foreground">
-                {VILLAGES.length} lokasi wisata di Bali
+                {villages.length} lokasi wisata di Bali
               </p>
             </div>
 
             {/* Destination List */}
             <div className="flex-1 overflow-y-auto scrollbar-hide p-1.5 sm:p-2">
-              {VILLAGES.map((village, index) => {
-                const forecast = getForecast(village.id, selectedTime);
+              {villages.map((village, index) => {
+                const forecast = choropleth.get(village.id);
                 const isActive = activeVillage === village.id;
-                const category = forecast ? getThermalCategory(forecast, petStandard) : null;
+                let category: string | null = null;
+                if (forecast) {
+                  const pet = forecast.pet_value;
+                  for (const [key, range] of Object.entries(ranges)) {
+                    if (pet >= range.min && pet < range.max) {
+                      category = key;
+                      break;
+                    }
+                  }
+                }
 
+                const destinationName = village.destination_name || village.village_name;
                 return (
                   <motion.button
                     key={village.id}
-                    onClick={() => onDestinationClick(village.id, village.destination_name)}
+                    onClick={() => onDestinationClick(village.id, destinationName, village.village_name)}
                     className={cn(
                       "destination-item w-full text-left flex items-center justify-between gap-1 sm:gap-2",
                       "p-2 sm:p-2.5",
@@ -124,11 +129,11 @@ export default function DestinationSidebar({
                         className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full flex-shrink-0 shadow-sm ring-1 ring-border/30"
                         style={{
                           backgroundColor: category
-                            ? PET_COLORS[category]
+                            ? PET_COLORS[category as keyof typeof PET_COLORS]
                             : '#cccccc',
                         }}
                       />
-                      <span className="truncate text-xs sm:text-sm font-medium">{village.destination_name}</span>
+                      <span className="truncate text-xs sm:text-sm font-medium">{destinationName}</span>
                     </div>
 
                     {forecast && (

@@ -1,25 +1,56 @@
--- WebGIS Thermal Comfort Forecast - Database Schema
--- PostgreSQL + PostGIS + Supabase-ready
+-- WebGIS Thermal Comfort Forecast - New Database Schema
+-- PostgreSQL + Supabase-ready (without PostGIS geometry)
 
 -- Extensions
-CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pgcrypto; -- for gen_random_uuid()
 
 -- =====================================================
--- Table: villages (Master Data Desa Wisata)
+-- Reset: Drop old functions/views/tables
+-- =====================================================
+DROP FUNCTION IF EXISTS public.villages_geojson() CASCADE;
+DROP VIEW IF EXISTS public.latest_weather_forecasts CASCADE;
+DROP VIEW IF EXISTS public.latest_batch CASCADE;
+DROP TABLE IF EXISTS public.weather_forecasts CASCADE;
+DROP TABLE IF EXISTS public.forecast_batches CASCADE;
+DROP TABLE IF EXISTS public.villages CASCADE;
+DROP TABLE IF EXISTS public.thermal_categories CASCADE;
+
+-- =====================================================
+-- Table: thermal_categories (Lookup Kategori Termal)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS public.thermal_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_key VARCHAR(20) NOT NULL UNIQUE,
+  category_name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert kategori standar
+INSERT INTO public.thermal_categories (category_key, category_name)
+VALUES
+  ('very_hot', 'Sangat Panas'),
+  ('hot', 'Panas'),
+  ('warm', 'Hangat'),
+  ('slight_warm', 'Agak Hangat'),
+  ('neutral', 'Netral'),
+  ('slight_cool', 'Agak Sejuk'),
+  ('cool', 'Sejuk'),
+  ('cold', 'Dingin'),
+  ('very_cold', 'Sangat Dingin')
+ON CONFLICT (category_key) DO NOTHING;
+
+-- =====================================================
+-- Table: villages (Master Data Desa Wisata, references only)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.villages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   village_name VARCHAR(100) NOT NULL UNIQUE,
-  -- Optional: Kode KDEPUM (tanpa titik) untuk sinkronisasi GeoJSON
-  kdepum_code VARCHAR(20) UNIQUE,
-  geom GEOMETRY(Polygon, 4326) NOT NULL,
+  destination_name VARCHAR(120),
+  -- Kode KDEPUM (dengan titik) untuk sinkronisasi ke file GeoJSON statis
+  kdepum_code VARCHAR(20) NOT NULL UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
--- Spatial index for fast geometry queries
-CREATE INDEX IF NOT EXISTS idx_villages_geom ON public.villages USING GIST (geom);
 
 -- Auto-update updated_at on row changes
 CREATE OR REPLACE FUNCTION public.set_updated_at()
@@ -98,18 +129,14 @@ CREATE TABLE IF NOT EXISTS public.weather_forecasts (
   visibility VARCHAR(50) NOT NULL,
 
   pet_value NUMERIC(5,2) NOT NULL,
-  thermal_category VARCHAR(20) NOT NULL,
-  thermal_sensation_scale SMALLINT NOT NULL,
+  
+  -- Dual thermal category references (FK to thermal_categories)
+  temperate_thermal_category UUID REFERENCES public.thermal_categories(id) ON DELETE SET NULL,
+  sub_tropic_thermal_category UUID REFERENCES public.thermal_categories(id) ON DELETE SET NULL,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   CONSTRAINT humidity_range CHECK (humidity >= 0 AND humidity <= 100),
-  CONSTRAINT sensation_scale_range CHECK (thermal_sensation_scale >= -4 AND thermal_sensation_scale <= 4),
-  CONSTRAINT thermal_category_valid CHECK (
-    thermal_category IN (
-      'very_hot','hot','warm','slight_warm','neutral','slight_cool','cool','cold','very_cold'
-    )
-  ),
   CONSTRAINT uniq_village_batch_time UNIQUE (village_id, batch_id, forecast_time)
 );
 
@@ -129,40 +156,6 @@ SELECT id, produced_at, forecast_start, forecast_end
 FROM public.forecast_batches
 WHERE is_latest = TRUE;
 
-CREATE OR REPLACE VIEW public.latest_weather_forecasts AS
-SELECT wf.*
-FROM public.weather_forecasts wf
-JOIN public.forecast_batches fb ON wf.batch_id = fb.id
-WHERE fb.is_latest = TRUE;
 
-
--- =====================================================
--- Row Level Security (Supabase-friendly, read-only public)
--- =====================================================
-ALTER TABLE public.villages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.forecast_batches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.weather_forecasts ENABLE ROW LEVEL SECURITY;
-
--- Public SELECT policies (adjust role as needed)
-DROP POLICY IF EXISTS select_villages_public ON public.villages;
-CREATE POLICY select_villages_public
-ON public.villages
-FOR SELECT
-USING (TRUE);
-
-DROP POLICY IF EXISTS select_batches_public ON public.forecast_batches;
-CREATE POLICY select_batches_public
-ON public.forecast_batches
-FOR SELECT
-USING (TRUE);
-
-DROP POLICY IF EXISTS select_forecasts_public ON public.weather_forecasts;
-CREATE POLICY select_forecasts_public
-ON public.weather_forecasts
-FOR SELECT
-USING (TRUE);
-
--- (Optional) Prevent writes for anon/public roles via Supabase settings.
--- In Supabase, configure RLS + role permissions to allow only SELECT for anon.
 
 -- End of schema

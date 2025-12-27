@@ -1,36 +1,39 @@
-import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { useMemo, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
-import { format, parseISO, isSameDay } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { FORECAST_TIMES } from '@/data/dummyData';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import { toWitaDate } from '@/lib/timezone';
 
 interface TimeSliderProps {
   selectedTime: string;
+  times: string[];
+  producedAt?: string | null;
+  isPlaying: boolean;
+  onPlayChange: (playing: boolean) => void;
   onTimeChange: (time: string) => void;
 }
 
-export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
+export default function TimeSlider({ selectedTime, times, producedAt, isPlaying, onPlayChange, onTimeChange }: TimeSliderProps) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentIndex = useMemo(() => {
-    return FORECAST_TIMES.findIndex((t) => t === selectedTime);
-  }, [selectedTime]);
+    return times.findIndex((t) => t === selectedTime);
+  }, [selectedTime, times]);
 
   const selectedDate = useMemo(() => {
-    return parseISO(selectedTime);
+    return toWitaDate(selectedTime);
   }, [selectedTime]);
 
   // Group forecast times by day
   const days = useMemo(() => {
     const grouped: { date: Date; times: string[] }[] = [];
     
-    FORECAST_TIMES.forEach((time) => {
-      const date = parseISO(time);
+    times.forEach((time) => {
+      const date = toWitaDate(time);
       const existingDay = grouped.find((d) => isSameDay(d.date, date));
       
       if (existingDay) {
@@ -41,33 +44,33 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
     });
 
     return grouped;
-  }, []);
+  }, [times]);
 
   const handlePrev = useCallback(() => {
     if (currentIndex > 0) {
-      onTimeChange(FORECAST_TIMES[currentIndex - 1]);
+      onTimeChange(times[currentIndex - 1]);
     }
-  }, [currentIndex, onTimeChange]);
+  }, [currentIndex, onTimeChange, times]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < FORECAST_TIMES.length - 1) {
-      onTimeChange(FORECAST_TIMES[currentIndex + 1]);
+    if (currentIndex < times.length - 1) {
+      onTimeChange(times[currentIndex + 1]);
     } else {
       // Loop back to start
-      onTimeChange(FORECAST_TIMES[0]);
+      onTimeChange(times[0]);
     }
-  }, [currentIndex, onTimeChange]);
+  }, [currentIndex, onTimeChange, times]);
 
   const handleSliderChange = (value: number[]) => {
     const index = value[0];
-    if (index >= 0 && index < FORECAST_TIMES.length) {
-      onTimeChange(FORECAST_TIMES[index]);
+    if (index >= 0 && index < times.length) {
+      onTimeChange(times[index]);
     }
   };
 
   const togglePlay = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
+    onPlayChange(!isPlaying);
+  }, [isPlaying, onPlayChange]);
 
   // Handle autoplay
   useEffect(() => {
@@ -136,9 +139,9 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
           </Button>
 
           <Slider
-            value={[currentIndex]}
+            value={[Math.max(0, currentIndex)]}
             min={0}
-            max={FORECAST_TIMES.length - 1}
+            max={Math.max(0, times.length - 1)}
             step={1}
             onValueChange={handleSliderChange}
             className="w-32 sm:w-48"
@@ -149,7 +152,7 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
             size="icon"
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={handleNext}
-            disabled={currentIndex === FORECAST_TIMES.length - 1 && !isPlaying}
+            disabled={currentIndex === times.length - 1 && !isPlaying}
             aria-label="Waktu berikutnya"
           >
             <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -160,7 +163,7 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
         <div className="flex justify-center gap-1 mt-2">
           {days.map((day, index) => {
             const isActive = isSameDay(day.date, selectedDate);
-            const isToday = isSameDay(day.date, new Date());
+            const isToday = isSameDay(day.date, toWitaDate(new Date()));
             
             return (
               <button
@@ -178,6 +181,15 @@ export default function TimeSlider({ selectedTime, onTimeChange }: TimeSliderPro
             );
           })}
         </div>
+
+        
+        {/* Produced time label */}
+        {producedAt && (
+          <div className="mt-1 text-center text-[10px] sm:text-xs text-muted-foreground">
+            Waktu Produksi: {format(toWitaDate(producedAt), 'dd MMM yyyy HH:mm', { locale: id })} WITA
+          </div>
+        )}
+        
       </div>
     </motion.div>
   );
