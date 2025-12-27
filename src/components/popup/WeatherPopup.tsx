@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { id } from 'date-fns/locale';
 import {
@@ -13,19 +13,18 @@ import {
   Cloud,
   Eye,
   Lightbulb,
+  CloudRain,
 } from 'lucide-react';
 import {
   WeatherForecast,
   PET_COLORS,
   PET_RANGES,
   PETStandard,
-  ThermalCategory,
   VISITOR_NOTES,
   FORECAST_TIMES,
-  getForecast,
+  getThermalCategory,
 } from '@/data/dummyData';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface WeatherPopupProps {
   villageName: string;
@@ -71,19 +70,21 @@ export default function WeatherPopup({
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        className="weather-popup"
+        className="weather-popup w-[340px] h-[480px] flex flex-col"
       >
-        <div className="p-6 text-center">
-          <p className="text-muted-foreground">Data tidak tersedia</p>
-          <Button variant="ghost" size="sm" onClick={onClose} className="mt-2">
-            Tutup
-          </Button>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-muted-foreground">Data tidak tersedia</p>
+            <Button variant="ghost" size="sm" onClick={onClose} className="mt-2">
+              Tutup
+            </Button>
+          </div>
         </div>
       </motion.div>
     );
   }
 
-  const category = forecast.thermal_category as ThermalCategory;
+  const category = getThermalCategory(forecast, standard);
   const petColor = PET_COLORS[category];
   const petRange = PET_RANGES[standard][category];
   const visitorNote = VISITOR_NOTES[category];
@@ -94,15 +95,15 @@ export default function WeatherPopup({
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
-      className="weather-popup"
+      className="weather-popup w-[340px] h-[480px] flex flex-col"
     >
       {/* Header */}
-      <div className="popup-header relative">
+      <div className="popup-header relative flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="font-bold text-lg text-foreground">{villageName}</h3>
-            <p className="text-sm text-muted-foreground">
-              {format(forecastDate, "dd MMM yyyy, HH:mm", { locale: id })} WITA
+            <h3 className="font-bold text-base text-foreground">{villageName}</h3>
+            <p className="text-xs text-muted-foreground">
+              {format(forecastDate, "EEEE, dd MMM yyyy", { locale: id })}
             </p>
           </div>
           <Button
@@ -117,24 +118,24 @@ export default function WeatherPopup({
         </div>
 
         {/* Time Navigation */}
-        <div className="flex items-center justify-center gap-2 mt-3">
+        <div className="flex items-center justify-center gap-2 mt-2">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-6 w-6"
             onClick={handlePrev}
             disabled={!canGoPrev}
             aria-label="Waktu sebelumnya"
           >
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <span className="text-xs text-muted-foreground font-mono">
-            {format(forecastDate, "HH:mm")}
+          <span className="text-xs text-muted-foreground font-mono bg-secondary px-2 py-0.5 rounded">
+            {format(forecastDate, "HH:mm")} WITA
           </span>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-6 w-6"
             onClick={handleNext}
             disabled={!canGoNext}
             aria-label="Waktu berikutnya"
@@ -146,66 +147,75 @@ export default function WeatherPopup({
 
       {/* PET Display */}
       <div
-        className="popup-pet-display"
+        className="popup-pet-display flex-shrink-0"
         style={{ backgroundColor: petColor }}
       >
-        <div className="text-4xl font-bold text-white drop-shadow-sm">
+        <p className="text-[10px] text-white/70 uppercase tracking-wide mb-1">
+          Kenyamanan Termal (PET)
+        </p>
+        <div className="text-3xl font-bold text-white drop-shadow-sm">
           {forecast.pet_value}°C
         </div>
-        <div className="mt-1 flex items-center justify-center gap-2">
-          <span className="text-white/90 font-medium text-lg">
+        <div className="mt-1">
+          <span className="text-white/90 font-medium text-sm">
             {petRange.labelId}
-          </span>
-          <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">
-            {forecast.thermal_sensation_scale > 0 ? '+' : ''}
-            {forecast.thermal_sensation_scale}
           </span>
         </div>
       </div>
 
       {/* Weather Parameters */}
-      <div className="popup-weather-grid">
+      <div className="popup-weather-grid flex-1 overflow-auto">
         <WeatherItem
-          icon={<Thermometer className="w-4 h-4" />}
+          icon={<Thermometer className="w-3.5 h-3.5" />}
           label="Suhu Udara"
-          value={`${forecast.temperature}°C`}
+          value={`${forecast.t}°C`}
         />
         <WeatherItem
-          icon={<Droplets className="w-4 h-4" />}
+          icon={<Droplets className="w-3.5 h-3.5" />}
           label="Kelembapan"
-          value={`${forecast.humidity}%`}
+          value={`${forecast.hu}%`}
         />
         <WeatherItem
-          icon={<Wind className="w-4 h-4" />}
-          label="Kecepatan Angin"
-          value={`${forecast.wind_speed} km/jam`}
+          icon={<Wind className="w-3.5 h-3.5" />}
+          label="Kec. Angin"
+          value={`${forecast.ws} km/jam`}
         />
         <WeatherItem
-          icon={<Compass className="w-4 h-4" />}
+          icon={<Compass className="w-3.5 h-3.5" />}
           label="Arah Angin"
-          value={forecast.wind_direction}
+          value={`${forecast.wd} → ${forecast.wd_to}`}
         />
         <WeatherItem
-          icon={<Cloud className="w-4 h-4" />}
-          label="Kondisi Cuaca"
-          value={forecast.weather_condition}
+          icon={<Cloud className="w-3.5 h-3.5" />}
+          label="Kondisi"
+          value={forecast.weather_desc}
         />
         <WeatherItem
-          icon={<Eye className="w-4 h-4" />}
+          icon={<Eye className="w-3.5 h-3.5" />}
           label="Jarak Pandang"
-          value={forecast.visibility}
+          value={forecast.vs_text}
+        />
+        <WeatherItem
+          icon={<CloudRain className="w-3.5 h-3.5" />}
+          label="Curah Hujan"
+          value={`${forecast.tp} mm`}
+        />
+        <WeatherItem
+          icon={<Cloud className="w-3.5 h-3.5" />}
+          label="Tutupan Awan"
+          value={`${forecast.tcc}%`}
         />
       </div>
 
       {/* Visitor Notes */}
-      <div className="popup-notes">
+      <div className="popup-notes flex-shrink-0">
         <div className="flex items-start gap-2">
-          <Lightbulb className="w-4 h-4 text-accent flex-shrink-0 mt-0.5" />
+          <Lightbulb className="w-3.5 h-3.5 text-accent flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-xs font-medium text-foreground mb-1">
+            <p className="text-[10px] font-medium text-foreground mb-0.5">
               Saran untuk Wisatawan
             </p>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-[10px] text-muted-foreground leading-relaxed">
               {visitorNote}
             </p>
           </div>
@@ -223,11 +233,11 @@ interface WeatherItemProps {
 
 function WeatherItem({ icon, label, value }: WeatherItemProps) {
   return (
-    <div className="flex items-center gap-2 p-2 bg-secondary/50 rounded-lg">
+    <div className="flex items-center gap-2 p-1.5 bg-secondary/50 rounded-lg">
       <div className="text-muted-foreground">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-[10px] text-muted-foreground truncate">{label}</p>
-        <p className="text-xs font-medium text-foreground truncate">{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[9px] text-muted-foreground truncate">{label}</p>
+        <p className="text-[11px] font-medium text-foreground truncate">{value}</p>
       </div>
     </div>
   );

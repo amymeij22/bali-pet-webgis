@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, MapPin, Thermometer } from 'lucide-react';
-import { VILLAGES, getForecast, PET_COLORS, ThermalCategory } from '@/data/dummyData';
+import { VILLAGES, getForecast, PET_COLORS, PETStandard, getThermalCategory } from '@/data/dummyData';
 import { cn } from '@/lib/utils';
 
 interface DestinationSidebarProps {
   selectedTime: string;
+  petStandard: PETStandard;
   onDestinationClick: (villageId: string, villageName: string) => void;
   activeVillage?: string | null;
 }
 
 export default function DestinationSidebar({
   selectedTime,
+  petStandard,
   onDestinationClick,
   activeVillage,
 }: DestinationSidebarProps) {
@@ -56,7 +58,7 @@ export default function DestinationSidebar({
                 <h2 className="font-semibold text-lg text-foreground">Destinasi Wisata</h2>
               </div>
               <p className="text-xs text-muted-foreground">
-                10 lokasi wisata di Bali
+                {VILLAGES.length} lokasi wisata di Bali
               </p>
             </div>
 
@@ -65,11 +67,12 @@ export default function DestinationSidebar({
               {VILLAGES.map((village, index) => {
                 const forecast = getForecast(village.id, selectedTime);
                 const isActive = activeVillage === village.id;
+                const category = forecast ? getThermalCategory(forecast, petStandard) : null;
 
                 return (
                   <motion.button
                     key={village.id}
-                    onClick={() => onDestinationClick(village.id, village.village_name)}
+                    onClick={() => onDestinationClick(village.id, village.destination_name)}
                     className={cn(
                       "destination-item w-full text-left flex items-center justify-between gap-2",
                       isActive && "active"
@@ -84,12 +87,12 @@ export default function DestinationSidebar({
                       <div
                         className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm ring-1 ring-border/30"
                         style={{
-                          backgroundColor: forecast
-                            ? PET_COLORS[forecast.thermal_category as ThermalCategory]
+                          backgroundColor: category
+                            ? PET_COLORS[category]
                             : '#cccccc',
                         }}
                       />
-                      <span className="truncate text-sm font-medium">{village.village_name}</span>
+                      <span className="truncate text-sm font-medium">{village.destination_name}</span>
                     </div>
 
                     {forecast && (
