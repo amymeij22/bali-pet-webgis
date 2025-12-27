@@ -1,7 +1,15 @@
 import { motion } from "framer-motion";
-import { Building2, Landmark, GraduationCap } from "lucide-react";
+import logoBmkg from "@/assets/logo-bmkg.webp";
+import logoStmkg from "@/assets/logo-stmkg.png";
+import logoInstrumentasi from "@/assets/logo-instrumentasi.png";
 
 export default function MapHeader() {
+  const logos = [
+    { src: logoBmkg, alt: "Logo BMKG" },
+    { src: logoStmkg, alt: "Logo STMKG" },
+    { src: logoInstrumentasi, alt: "Logo Instrumentasi" },
+  ];
+
   return (
     <motion.header
       initial={{ y: -50, opacity: 0 }}
@@ -11,12 +19,12 @@ export default function MapHeader() {
     >
       {/* Logo Row */}
       <div className="flex items-center justify-center gap-2 mb-2 pointer-events-auto">
-        {[Building2, Landmark, GraduationCap].map((Icon, i) => (
+        {logos.map((logo, i) => (
           <div
             key={i}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm p-1"
           >
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+            <img src={logo.src} alt={logo.alt} className="w-full h-full object-contain" />
           </div>
         ))}
       </div>
