@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { Building2, Landmark, GraduationCap } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Globe, Thermometer } from "lucide-react";
 
 export default function MapHeader() {
   return (
@@ -7,28 +7,29 @@ export default function MapHeader() {
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.1 }}
-      className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-3 pointer-events-none"
+      className="fixed top-4 left-1/2 -translate-x-1/2 z-30"
     >
-      {/* Logo Row - Above Header */}
-      <div className="flex items-center justify-center gap-2 mb-2 pointer-events-auto">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm">
-          <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+      <div className="glass-panel rounded-2xl px-4 py-3 flex items-center gap-3">
+        {/* Icon */}
+        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+          <Thermometer className="w-4.5 h-4.5 text-primary" />
         </div>
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm">
-          <Landmark className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
+
+        {/* Text Content */}
+        <div className="flex flex-col leading-tight">
+          {/* Baris 1 */}
+          <h1 className="text-sm font-semibold text-foreground">Thermal Comfort Forecast</h1>
+
+          {/* Baris 2 (desktop only, elegant) */}
+          <div className="hidden sm:flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span>Destinasi Wisata Provinsi Bali</span>
+            <span className="opacity-40">•</span>
+            <div className="flex items-center gap-1">
+              <Globe className="w-3.5 h-3.5" />
+              <span>WebGIS</span>
+            </div>
+          </div>
         </div>
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-card/90 backdrop-blur-md flex items-center justify-center border border-border shadow-sm">
-          <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-        </div>
-      </div>
-      
-      {/* Title - Centered */}
-      <div className="glass-panel rounded-xl px-3 sm:px-5 py-2 pointer-events-auto max-w-[95vw] sm:max-w-none">
-        <h1 className="text-[10px] sm:text-sm md:text-base font-semibold text-foreground text-center leading-tight">
-          Prediksi Kenyamanan Termal Berbasis Indeks{' '}
-          <em className="italic">Physiological Equivalent Temperature</em>{' '}
-          untuk Destinasi Wisata di Provinsi Bali
-        </h1>
       </div>
     </motion.header>
   );
