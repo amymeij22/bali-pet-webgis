@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle dengan gradient hijau (theme PET) -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2ecc71;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#27ae60;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
+  
+  <!-- Icon Termometer (simbol thermal comfort) -->
+  <g transform="translate(256, 256)">
+    <!-- Termometer body -->
+    <rect x="-20" y="-120" width="40" height="200" rx="20" fill="#ffffff" opacity="0.9"/>
+    <!-- Termometer bulb -->
+    <circle cx="0" cy="100" r="50" fill="#ffffff" opacity="0.9"/>
+    <!-- Mercury -->
+    <rect x="-12" y="-80" width="24" height="120" rx="12" fill="#e74c3c"/>
+    <circle cx="0" cy="20" r="20" fill="#e74c3c"/>
+    
+    <!-- Peta icon kecil di bawah -->
+    <g transform="translate(0, 180) scale(0.6)">
+      <path d="M-60,-40 L60,-40 L60,40 L-60,40 Z" fill="none" stroke="#ffffff" stroke-width="8" opacity="0.7"/>
+      <circle cx="-30" cy="-10" r="8" fill="#ffffff" opacity="0.7"/>
+      <circle cx="30" cy="10" r="8" fill="#ffffff" opacity="0.7"/>
+    </g>
+  </g>
+  
+  <!-- Text "PET" kecil di bawah -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.9">PET</text>
+</svg>

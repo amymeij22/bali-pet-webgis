@@ -1,9 +1,9 @@
-# PRD: WebGIS Thermal Comfort Forecast
+## PRD: WebGIS Thermal Comfort Forecast
 
 **Nama Proyek:** Prediksi Indeks Kenyamanan Termal Destinasi Wisata Provinsi Bali  
 **Versi:** 1.0  
-**Status:** Draft  
-**Tech Stack:** Next.js 15.x (App Router, Frontend), Supabase (Database/PostGIS), Leaflet.js (Map Library)
+**Status:** Draft / Living Document (disesuaikan dengan implementasi terkini)  
+**Tech Stack (aktual):** React 18 + TypeScript + Vite (Frontend), Supabase (PostgreSQL), Leaflet.js (Map Library), Tailwind CSS + shadcn/ui (UI)
 
 ---
 
@@ -28,7 +28,9 @@
 ---
 
 ## 1. Ringkasan Proyek
-Platform WebGIS interaktif dengan landing yang langsung menampilkan peta full-bleed (tanpa jendela/wrapper tambahan) untuk visualisasi prediksi kenyamanan termal berdasarkan indeks Physiological Equivalent Temperature (PET) di 10 destinasi wisata di Bali. Prediksi disajikan per 3 jam untuk 3 hari ke depan, selalu menampilkan batch produksi terbaru (produce time). Peta menggunakan choropleth pada poligon desa wisata (contoh geometri awal: destinasi_wisata_bali.geojson), dilengkapi kontrol waktu, klasifikasi standar PET (Temperate vs (Sub) Tropis) yang mengubah warna secara responsif, serta pop-up interaktif dengan parameter cuaca dan saran bagi wisatawan.
+Platform WebGIS interaktif dengan landing yang langsung menampilkan peta full-bleed (tanpa jendela/wrapper tambahan) untuk visualisasi prediksi kenyamanan termal berdasarkan indeks Physiological Equivalent Temperature (PET) di destinasi wisata di Bali. Prediksi disajikan per 3 jam untuk 3 hari ke depan, selalu menampilkan batch produksi terbaru (produce time). Peta menggunakan choropleth pada poligon desa wisata (geometri awal: file statis `destinasi_wisata_bali.geojson`), dilengkapi kontrol waktu, klasifikasi standar PET (Temperate vs (Sub) Tropis) yang mengubah warna secara responsif, serta pop-up interaktif dengan parameter cuaca dan saran bagi wisatawan.
+
+Implementasi frontend menggunakan React + Vite (SPA) dengan routing `react-router-dom` (bukan Next.js/App Router), dan integrasi data cuaca & PET melalui Supabase client `@supabase/supabase-js`.
 
 ---
 
@@ -81,28 +83,31 @@ Use Case utama:
 - **Data Management:** Menampilkan data dari batch produksi terbaru menggunakan `is_latest = TRUE`.
 - **Full-Bleed Map:** Peta langsung memenuhi viewport; semua kontrol berupa elemen melayang minimalis (sidebar destinasi, selector standar, legenda, slider waktu) yang non-intrusif.
 
-### Alur Sistem (End-to-End)
+### Alur Sistem (End-to-End, sesuai implementasi)
 1. **Load Aplikasi:**
-	 - Inisialisasi Next.js, Leaflet map (dengan OSM TileLayer), dan Supabase client.
+	 - Inisialisasi aplikasi React (Vite), Leaflet map (dengan OSM TileLayer), dan Supabase client.
 	 - Set initial map view ke center Bali dengan zoom level sesuai.
 2. **Ambil Batch Terbaru:**
 	 - Query `forecast_batches` untuk mendapatkan `id` dengan `is_latest = TRUE`, `produced_at`, dan rentang forecast.
 3. **Ambil Geometri Desa:**
-	 - Muat GeoJSON poligon desa (`villages`) dari cache lokal atau Supabase.
+	 - Muat GeoJSON poligon desa wisata dari file statis `destinasi_wisata_bali.geojson` (disajikan sebagai aset publik di frontend).
 	 - Render sebagai GeoJSON layer di Leaflet.
+	 - Setiap fitur pada GeoJSON dihubungkan ke baris di tabel `villages` melalui `kdepum_code` yang dinormalisasi (mis. menghapus titik dan karakter non-digit).
 4. **Ambil Daftar Destinasi:**
-	 - Query `villages` untuk mendapatkan `id` dan `village_name`.
+	 - Query `villages` untuk mendapatkan `id`, `village_name`, `destination_name`, dan `kdepum_code`.
 	 - Populate sidebar kiri dengan daftar destinasi wisata.
-5. **Ambil Daftar Waktu Forecast:**
-	 - Query `weather_forecasts` untuk batch terbaru, kumpulkan unik `forecast_time` terurut.
-	 - Bangun opsi slider dengan step 3 jam.
+5. **Ambil Daftar Waktu Forecast & Cache Data:**
+	 - Query `weather_forecasts` untuk batch terbaru dan mengambil **semua** baris forecast sekaligus (`getAllForecastsForBatch`).
+	 - Dari hasil tersebut, kumpulkan unik `forecast_time` terurut untuk membangun opsi slider dengan step 3 jam.
+	 - Cache seluruh data forecast di memory sebagai:
+	   - `forecastsByTime: Map<forecast_time, Map<village_id, WeatherForecast>>`.
 6. **Render Choropleth Awal:**
-	 - Untuk `forecast_time` awal (default: waktu terawal atau saat ini dibulatkan ke 3 jam).
-	 - Query data `thermal_category` per desa untuk waktu tersebut.
-	 - Set style layer dengan warna sesuai kategori.
+	 - Pilih `forecast_time` awal (default: waktu terawal yang tersedia).
+	 - Turunkan data menjadi `choropleth: Map<village_id, { pet_value }>` untuk waktu tersebut dari cache `forecastsByTime`.
+	 - Set style layer dengan warna sesuai kategori PET yang dihitung di frontend berdasarkan standar aktif (Temperate/Tropis) dan nilai `pet_value`.
 7. **Interaksi Pengguna:**
-	 - **Slider waktu:** Re-fetch data untuk waktu terpilih, panggil `setStyle()` untuk update warna.
-	 - **Selector standar PET:** Toggle antara Temperate/Tropis, re-render legenda (rentang PET berubah, warna tetap sama).
+	 - **Slider waktu:** Mengubah `selectedTime` dan menurunkan `choropleth` baru dari cache (tanpa query ulang Supabase), lalu memanggil `setStyle()` untuk update warna.
+	 - **Selector standar PET:** Toggle antara Temperate/Tropis, menghitung ulang kategori PET di sisi frontend berdasarkan `PET_RANGES` untuk standar aktif, lalu re-render legenda dan layer peta.
 	 - **Klik poligon:** Tampilkan pop-up dengan detail cuaca lengkap + navigasi jam.
 	 - **Klik item daftar destinasi:** Pan peta ke desa, tampilkan pop-up yang sama.
 8. **Caching & Offline:**
@@ -149,19 +154,36 @@ Use Case utama:
 
 ---
 
-## 8. Arsitektur Data (Supabase/PostgreSQL)
+## 8. Arsitektur Data (Supabase/PostgreSQL – sesuai schema.sql)
 
-### Tabel `villages` (Master Data Desa Wisata)
+### Tabel `thermal_categories` (Lookup Kategori Termal)
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
+| `id` | UUID | PK, DEFAULT gen_random_uuid() | ID unik kategori |
+| `category_key` | VARCHAR(20) | NOT NULL, UNIQUE | Kunci kategori (`very_hot`, `neutral`, dst) |
+| `category_name` | VARCHAR(100) | NOT NULL | Nama kategori (Indonesia) |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Waktu record dibuat |
+
+**Catatan:**
+- Menyimpan 9 kategori termal standar PET.
+- Dikaitkan dengan tabel `weather_forecasts` melalui kolom UUID.
+
+---
+
+### Tabel `villages` (Master Data Desa Wisata, referensi ke GeoJSON)
 | Column | Type | Constraint | Description |
 |--------|------|------------|-------------|
 | `id` | UUID | PK, DEFAULT gen_random_uuid() | ID unik desa |
 | `village_name` | VARCHAR(100) | NOT NULL, UNIQUE | Nama desa wisata |
-| `geom` | GEOMETRY(Polygon, 4326) | NOT NULL | Poligon batas desa |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Waktu record dibuat |
-| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Waktu record terakhir diupdate |
+| `destination_name` | VARCHAR(120) | NULL | Nama destinasi wisata (brand wisata) |
+| `kdepum_code` | VARCHAR(20) | NOT NULL, UNIQUE | Kode KDEPUM (boleh mengandung titik) untuk sinkronisasi dengan GeoJSON |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Waktu record dibuat |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Waktu record terakhir diupdate (auto-update via trigger) |
 
-**Indeks:**
-- `idx_villages_geom` GIST (`geom`) — untuk spatial query cepat.
+**Catatan Penting:**
+- Skema aktual **tidak** menyimpan geometri `geom` di database.
+- Batas desa wisata diambil dari file GeoJSON statis `destinasi_wisata_bali.geojson`.
+- Penyambungan poligon ke baris `villages` dilakukan di frontend dengan menormalkan `kdepum_code` dari properti GeoJSON (menghapus karakter non-digit) dan mencocokkannya ke kolom `kdepum_code`.
 
 ---
 
@@ -197,9 +219,9 @@ Use Case utama:
 | `weather_condition` | VARCHAR(100) | NOT NULL | Deskripsi cuaca (Cerah, Hujan, dst) |
 | `visibility` | VARCHAR(50) | NOT NULL | Jarak pandang (Baik, Sedang, Buruk) |
 | `pet_value` | NUMERIC(5,2) | NOT NULL | Nilai PET (°C) |
-| `thermal_category` | VARCHAR(20) | NOT NULL | Kategori termal (`neutral`, `warm`, dst) |
-| `thermal_sensation_scale` | SMALLINT | NOT NULL, CHECK (-4 to +4) | Skala sensasi termal |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Waktu record dibuat |
+| `temperate_thermal_category` | UUID | NULL, FK → `thermal_categories.id` | Kategori termal (standar iklim sedang) |
+| `sub_tropic_thermal_category` | UUID | NULL, FK → `thermal_categories.id` | Kategori termal (standar tropis/subtropis) |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Waktu record dibuat |
 
 **Indeks:**
 - `idx_forecasts_batch_time` (`batch_id`, `forecast_time`) — untuk query slider waktu.
@@ -209,23 +231,25 @@ Use Case utama:
 **Foreign Key Constraints:**
 - `village_id` ON DELETE CASCADE
 - `batch_id` ON DELETE CASCADE
+- `temperate_thermal_category` / `sub_tropic_thermal_category` ON DELETE SET NULL
 
 ---
 
 ### Improvements dari Desain Sebelumnya:
 1. **Penamaan konsisten:** `weather_forecasts` lebih deskriptif dari `weather_data`.
-2. **Kolom timestamp:** Tambah `created_at` dan `updated_at` untuk audit trail.
-3. **Constraints:** CHECK constraints untuk validasi data (humidity 0-100, scale -4 to +4).
-4. **Normalisasi:** Kolom `thermal_category` dan `thermal_sensation_scale` dipisah untuk fleksibilitas.
+2. **Kolom timestamp:** Tambah `created_at` dan `updated_at` (di `villages`) untuk audit trail.
+3. **Constraints:** CHECK constraints untuk validasi data (humidity 0-100) dan unique constraint per kombinasi desa-batch-waktu.
+4. **Normalisasi:** Kategori termal dipisah ke tabel lookup `thermal_categories`; tabel `weather_forecasts` hanya menyimpan referensi UUID untuk dua standar (temperate & tropis/subtropis).
 5. **Unique constraint:** Hindari duplikasi data untuk kombinasi desa-batch-waktu.
 6. **Tipe data optimal:** VARCHAR dengan panjang terbatas, NUMERIC dengan precision sesuai kebutuhan.
+7. **Simplifikasi spasial:** Geometri desa disimpan sebagai GeoJSON statis di frontend, sehingga Supabase tidak perlu PostGIS untuk MVP.
 
 ---
 
-## 9. API & Query Layer
+## 9. API & Query Layer (Supabase Client)
 Contoh query Supabase (SQL kira-kira setara dengan filter JS Supabase client):
 
-- **Ambil batch terbaru:**
+- **Ambil batch terbaru (dipakai di `getLatestBatch()`):**
 ```sql
 SELECT id, produced_at, forecast_start, forecast_end
 FROM forecast_batches
@@ -233,7 +257,7 @@ WHERE is_latest = TRUE
 LIMIT 1;
 ```
 
-- **Ambil daftar waktu untuk slider:**
+- **Ambil daftar waktu untuk slider (opsional; saat ini frontend mengambil dari hasil full fetch):**
 ```sql
 SELECT DISTINCT forecast_time
 FROM weather_forecasts
@@ -241,7 +265,7 @@ WHERE batch_id = :latest_batch_id
 ORDER BY forecast_time ASC;
 ```
 
-- **Ambil data per desa untuk waktu tertentu (untuk choropleth):**
+- **Ambil data per desa untuk waktu tertentu (untuk choropleth – bentuk SQL konseptual):**
 ```sql
 SELECT 
 	village_id,
@@ -253,7 +277,7 @@ WHERE batch_id = :latest_batch_id
 	AND forecast_time = :selected_time;
 ```
 
-- **Ambil detail cuaca untuk pop-up (satu desa, satu waktu):**
+- **Ambil detail cuaca untuk pop-up (satu desa, satu waktu; sekarang diambil dari cache setelah full fetch):**
 ```sql
 SELECT 
 	v.village_name,
@@ -274,16 +298,14 @@ WHERE wf.village_id = :village_id
 	AND wf.forecast_time = :selected_time;
 ```
 
-- **Ambil geometri desa dengan GeoJSON:**
-```sql
-SELECT 
-	id,
-	village_name,
-	ST_AsGeoJSON(geom)::json AS geojson
-FROM villages
-ORDER BY village_name;
-```
-
+Catatan implementasi:
+- Frontend saat ini menggunakan strategi **full fetch sekali** untuk satu batch:
+	- `SELECT * FROM weather_forecasts WHERE batch_id = :latest_batch_id ORDER BY forecast_time ASC;`
+	- Hasil disusun menjadi `Map<forecast_time, Map<village_id, WeatherForecast>>` di memori, digunakan untuk:
+		- choropleth (peta),
+		- sidebar destinasi,
+		- popup detail,
+		- navigasi waktu di slider & popup.
 - **Ambil daftar destinasi wisata untuk sidebar kiri:**
 ```sql
 SELECT id, village_name
@@ -294,8 +316,8 @@ ORDER BY village_name ASC;
 ---
 
 ## 10. Logika Sistem (Algoritma)
-### A. Penentuan Warna (Standar PET)
-Sistem memiliki dua standar klasifikasi PET dengan 9 kategori:
+### A. Penentuan Warna (Standar PET – sesuai implementasi)
+Sistem memiliki dua standar klasifikasi PET dengan 9 kategori, didefinisikan di frontend dan selaras dengan lookup `thermal_categories` di backend:
 
 | Persepsi Termal | Rentang PET Iklim Sedang (°C) | Rentang PET Tropis/Subtropis (°C) | Skala Sensasi | Kode Warna |
 |-----------------|-------------------------------|-----------------------------------|---------------|------------|
@@ -310,10 +332,16 @@ Sistem memiliki dua standar klasifikasi PET dengan 9 kategori:
 | Sangat Dingin Sekali (Very cold) | < 4 | < 14 | −4 | `#000080` (Navy) |
 
 **Catatan Penting:**
-- Database menyimpan kolom `thermal_sensation_scale` (INT) untuk skala sensasi termal.
-- Database menyimpan kolom `thermal_category` (TEXT) untuk kategori (misal: `neutral`, `warm`, `hot`).
-- Frontend **tidak perlu** menghitung kategori; cukup mapping `thermal_category` ke warna.
-- Ketika selector standar (Temperate ↔ Tropis) berubah, layer peta dan legenda harus di-render ulang agar warna dan rentang label mengikuti standar aktif.
+- Database menyimpan referensi kategori termal sebagai UUID:
+	- `temperate_thermal_category` untuk standar iklim sedang.
+	- `sub_tropic_thermal_category` untuk standar tropis/subtropis.
+- Frontend menyimpan definisi rentang PET (min–max) per kategori dalam konstanta `PET_RANGES` dan **secara eksplisit menghitung kategori** di sisi klien berdasarkan:
+	- nilai `pet_value` (°C),
+	- standar aktif (temperate vs tropis),
+	- dan tabel rentang tersebut.
+- Ketika selector standar (Temperate ↔ Tropis) berubah:
+	- layer peta dan legenda di-render ulang dengan menghitung ulang kategori dari `pet_value`,
+	- sehingga warna dan label selalu konsisten dengan standar aktif tanpa perlu query tambahan ke backend.
 
 Pseudocode pemilihan warna:
 ```ts
@@ -345,25 +373,29 @@ WHERE batch_id = (
 
 ### C. Sinkronisasi Slider Waktu
 - Setiap langkah slider merepresentasikan satu `forecast_time`.
-- Saat nilai slider berubah, layer Leaflet memanggil `setStyle()` untuk mewarnai ulang berdasarkan kategori termal.
+- Data untuk semua `forecast_time` telah diambil sekali di awal dan disimpan di cache in-memory (`forecastsByTime`).
+- Saat nilai slider berubah, layer Leaflet memanggil `setStyle()` untuk mewarnai ulang berdasarkan kategori termal yang dihitung dari cache.
 
-Pseudocode:
+Pseudocode (mendekati implementasi di React):
 ```ts
 function onTimeChange(selectedTime: string) {
-	// Ambil data dari cache atau fetch dari Supabase
-	const data = cache.get(selectedTime) ?? await fetchWeatherData(latestBatchId, selectedTime);
+	// Ambil data dari cache in-memory (Map<time, Map<villageId, forecast>>)
+	const data = forecastsByTime.get(selectedTime);
 	
 	// Update style poligon peta
 	villageLayer.setStyle((feature) => {
-		const villageId = feature.properties.id;
-		const forecast = data[villageId];
+		const villageId = getVillageIdFromFeature(feature); // via mapping KDEPUM -> id desa
+		const forecast = data?.get(villageId);
 		
 		if (!forecast) {
 			return { fillColor: '#cccccc', weight: 1, color: '#fff', fillOpacity: 0.5 };
 		}
 		
+		// Hitung kategori berdasarkan nilai PET dan standar aktif
+		const category = getCategoryFromPET(forecast.pet_value, currentStandard);
+		
 		return {
-			fillColor: getColorByCategory(forecast.thermal_category),
+			fillColor: getColorByCategory(category),
 			weight: 1,
 			color: '#fff',
 			fillOpacity: 0.8,
@@ -443,7 +475,7 @@ function onDestinationClick(villageId: string, villageName: string) {
 ---
 
 ## 13. Deployment & Konfigurasi
-- **Environment Variables (Next.js):**
+- **Environment Variables (Vite/React):**
 	- `NEXT_PUBLIC_SUPABASE_URL`
 	- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - **Build & Hosting:**

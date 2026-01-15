@@ -35,6 +35,7 @@ interface WeatherPopupProps {
   standard: PETStandard;
   onClose: () => void;
   onTimeChange: (time: string) => void;
+  hideVisitorNote?: boolean;
 }
 
 export default function WeatherPopup({
@@ -47,6 +48,7 @@ export default function WeatherPopup({
   standard,
   onClose,
   onTimeChange,
+  hideVisitorNote = false,
 }: WeatherPopupProps) {
   // Indexing is handled by parent now; we only navigate using provided time
   const ranges = PET_RANGES[standard];
@@ -209,19 +211,21 @@ export default function WeatherPopup({
       </div>
 
       {/* Visitor Notes */}
-      <div className="popup-notes flex-shrink-0">
-        <div className="flex items-start gap-2">
-          <Lightbulb className="w-3.5 h-3.5 text-accent flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[10px] font-medium text-foreground mb-0.5">
-              Saran untuk Wisatawan
-            </p>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
-              {visitorNote}
-            </p>
+      {!hideVisitorNote && (
+        <div className="popup-notes flex-shrink-0">
+          <div className="flex items-start gap-2">
+            <Lightbulb className="w-3.5 h-3.5 text-accent flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-[10px] font-medium text-foreground mb-0.5">
+                Saran untuk Wisatawan
+              </p>
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                {visitorNote}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </motion.div>
   );
 }

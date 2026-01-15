@@ -15,7 +15,7 @@ export default function MapHeader() {
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.1 }}
-      className="fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-3 pointer-events-none"
+      className="map-header fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-3 pointer-events-none"
     >
       {/* Logo Row */}
       <div className="flex items-center justify-center gap-2 mb-2 pointer-events-auto">

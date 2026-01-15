@@ -23,6 +23,40 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2ecc71" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Bali PET" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            .then((registration) => {
+              console.log('[PWA] Service Worker registered successfully:', registration.scope);
+              
+              // Check for updates every hour
+              setInterval(() => {
+                registration.update();
+              }, 60 * 60 * 1000);
+
+              // Check for updates immediately
+              registration.update();
+            })
+            .catch((error) => {
+              console.error('[PWA] Service Worker registration failed:', error);
+              console.log('[PWA] Make sure you are accessing via HTTPS or localhost');
+            });
+        });
+      } else {
+        console.warn('[PWA] Service Worker not supported in this browser');
+      }
+    </script>
   </head>
 
   <body>

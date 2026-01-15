@@ -114,7 +114,7 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     return {
       fillColor,
       weight: isHighlighted ? 3 : 2,
-      color: isHighlighted ? '#1e3a5f' : '#ffffff',
+      color: isHighlighted ? '#111827' : '#111827',
       fillOpacity: isHighlighted ? 0.9 : 0.75,
       opacity: 1,
     };

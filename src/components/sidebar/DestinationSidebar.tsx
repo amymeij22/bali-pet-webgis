@@ -71,7 +71,7 @@ export default function DestinationSidebar({
           {/* Header */}
           <div className="p-3 sm:p-4 border-b border-border/50">
             <div className="flex items-center gap-2 mb-1">
-              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-accent destination-header-icon" />
               <h2 className="font-semibold text-sm sm:text-lg text-foreground">
                 Destinasi Wisata
               </h2>
