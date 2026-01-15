@@ -130,23 +130,23 @@ export default function NotificationToggle() {
       size="sm"
       onClick={handleToggle}
       disabled={isLoading}
-      className="gap-2 h-7 text-[10px] sm:text-xs"
+      className="gap-1.5 h-7 px-2 text-[10px] sm:text-xs whitespace-nowrap"
       aria-label={isEnabled ? 'Matikan notifikasi' : 'Aktifkan notifikasi'}
     >
       {isLoading ? (
         <>
-          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
-          <span className="hidden sm:inline">Memproses...</span>
+          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin flex-shrink-0" />
+          <span>Memproses...</span>
         </>
       ) : isEnabled ? (
         <>
-          <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Notifikasi Aktif</span>
+          <Bell className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          <span>Notifikasi Aktif</span>
         </>
       ) : (
         <>
-          <BellOff className="w-3 h-3 sm:w-4 sm:h-4" />
-          <span className="hidden sm:inline">Aktifkan Notifikasi</span>
+          <BellOff className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          <span>Aktifkan Notifikasi</span>
         </>
       )}
     </Button>

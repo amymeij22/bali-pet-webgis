@@ -184,7 +184,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
         </div>
 
         {/* Notification Toggle - Above produced time */}
-        <div className="mt-2 flex justify-center">
+        <div className="mt-2 flex justify-center items-center">
           <NotificationToggle />
         </div>
         
