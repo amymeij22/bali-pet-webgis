@@ -8,7 +8,8 @@ import WeatherPopup from '@/components/popup/WeatherPopup';
 import MapHeader from '@/components/header/MapHeader';
 import DataSourceCard from '@/components/controls/DataSourceCard';
 import { PETStandard } from '@/data/dummyData';
-import { getLatestBatch, getVillages, getAllForecastsForBatch, WeatherForecast } from '@/data/supabaseQueries';
+import { getLatestBatch, getVillages, getAllForecastsForBatch, WeatherForecast, ForecastBatch } from '@/data/supabaseQueries';
+import { useBatchMonitor } from '@/hooks/useBatchMonitor';
 
 const Index = () => {
   // State
@@ -24,6 +25,7 @@ const Index = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [times, setTimes] = useState<string[]>([]);
   const [producedAt, setProducedAt] = useState<string | null>(null);
+  const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [villages, setVillages] = useState<Array<{ id: string; village_name: string; destination_name: string | null; kdepum_code: string | null }>>([]);
   const [forecastsByTime, setForecastsByTime] = useState<Map<string, Map<string, WeatherForecast>>>(new Map());
@@ -36,6 +38,7 @@ const Index = () => {
       try {
         const latest = await getLatestBatch();
         if (!latest) return;
+        setCurrentBatchId(latest.id);
         const allForecasts = await getAllForecastsForBatch(latest.id);
         setProducedAt(latest.produced_at);
 
@@ -62,6 +65,38 @@ const Index = () => {
       }
     })();
   }, []);
+
+  // Handle new batch detected
+  const handleNewBatch = useCallback(async (batch: ForecastBatch) => {
+    console.log('[Index] New batch detected, reloading data...', batch.id);
+    
+    // Reload data untuk batch baru
+    try {
+      const allForecasts = await getAllForecastsForBatch(batch.id);
+      setCurrentBatchId(batch.id);
+      setProducedAt(batch.produced_at);
+
+      // Build times list (sorted)
+      const timeSet = new Set(allForecasts.map((f) => f.forecast_time));
+      const sortedTimes = Array.from(timeSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+      setTimes(sortedTimes);
+      setSelectedTime(sortedTimes[0] ?? '');
+
+      // Group forecasts by time -> village
+      const grouped = new Map<string, Map<string, WeatherForecast>>();
+      allForecasts.forEach((f) => {
+        const map = grouped.get(f.forecast_time) ?? new Map<string, WeatherForecast>();
+        map.set(f.village_id, f);
+        grouped.set(f.forecast_time, map);
+      });
+      setForecastsByTime(grouped);
+    } catch (err) {
+      console.error('[Index] Failed to reload data for new batch:', err);
+    }
+  }, []);
+
+  // Monitor for new batches (triggers push notification)
+  useBatchMonitor(currentBatchId, handleNewBatch);
 
   // Derive choropleth from cached forecasts when time changes
   useEffect(() => {

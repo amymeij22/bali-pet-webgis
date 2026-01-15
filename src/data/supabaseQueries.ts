@@ -100,3 +100,78 @@ export async function getThermalCategories(): Promise<ThermalCategory[]> {
 
 // Deprecated: getChoroplethByTime, getPopupDetail
 // Instead: Use getAllForecastsForBatch() on app mount, cache by time/village, read from cache
+
+// Push Notification Subscriptions
+export interface PushSubscription {
+  id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  is_active: boolean;
+  last_notified_batch_id: string | null;
+  last_notified_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Save push subscription
+export async function savePushSubscription(
+  endpoint: string,
+  p256dh: string,
+  auth: string
+): Promise<PushSubscription | null> {
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .upsert(
+      {
+        endpoint,
+        p256dh,
+        auth,
+        user_agent: navigator.userAgent,
+        is_active: true,
+      },
+      {
+        onConflict: 'endpoint',
+      }
+    )
+    .select()
+    .single();
+
+  if (error) {
+    console.error('[Push] Failed to save subscription:', error);
+    return null;
+  }
+
+  return data as PushSubscription;
+}
+
+// Remove push subscription
+export async function removePushSubscription(endpoint: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('push_subscriptions')
+    .update({ is_active: false })
+    .eq('endpoint', endpoint);
+
+  if (error) {
+    console.error('[Push] Failed to remove subscription:', error);
+    return false;
+  }
+
+  return true;
+}
+
+// Get all active subscriptions
+export async function getActivePushSubscriptions(): Promise<PushSubscription[]> {
+  const { data, error } = await supabase
+    .from('push_subscriptions')
+    .select('*')
+    .eq('is_active', true);
+
+  if (error) {
+    console.error('[Push] Failed to get subscriptions:', error);
+    return [];
+  }
+
+  return (data ?? []) as PushSubscription[];
+}

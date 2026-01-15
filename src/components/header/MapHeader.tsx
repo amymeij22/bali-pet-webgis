@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import logoBmkg from "@/assets/logo-bmkg.webp";
 import logoStmkg from "@/assets/logo-stmkg.png";
 import logoInstrumentasi from "@/assets/logo-instrumentasi.png";
+import NotificationToggle from "@/components/notifications/NotificationToggle";
 
 export default function MapHeader() {
   const logos = [
@@ -29,9 +30,12 @@ export default function MapHeader() {
         ))}
       </div>
 
-      {/* Title */}
-      <div className="glass-panel rounded-xl px-4 sm:px-6 py-2 pointer-events-auto max-w-[92vw] sm:max-w-[720px]">
-        <h1 className="text-[11px] sm:text-sm md:text-base font-semibold text-foreground text-center leading-snug">
+      {/* Title with Notification Toggle */}
+      <div className="glass-panel rounded-xl px-4 sm:px-6 py-2 pointer-events-auto max-w-[92vw] sm:max-w-[720px] relative">
+        <div className="absolute top-2 right-2">
+          <NotificationToggle />
+        </div>
+        <h1 className="text-[11px] sm:text-sm md:text-base font-semibold text-foreground text-center leading-snug pr-8 sm:pr-12">
           {/* Baris 1 */}
           <span className="block">
             Prediksi Kenyamanan Termal Berbasis Indeks <em className="italic">Physiological Equivalent Temperature</em>

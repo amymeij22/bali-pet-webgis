@@ -109,3 +109,90 @@ self.addEventListener('message', (event) => {
     self.skipWaiting();
   }
 });
+
+// Push event - handle incoming push notifications
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push event received:', event);
+
+  let notificationData = {
+    title: 'Prakiraan Baru Tersedia',
+    body: 'Data prakiraan kenyamanan termal terbaru sudah tersedia',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    tag: 'new-forecast-batch',
+    requireInteraction: false,
+    data: {
+      url: '/',
+      timestamp: Date.now(),
+    },
+  };
+
+  // Parse push data jika ada
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      if (data.title) notificationData.title = data.title;
+      if (data.body) notificationData.body = data.body;
+      if (data.url) notificationData.data.url = data.url;
+      if (data.batchId) notificationData.data.batchId = data.batchId;
+    } catch (e) {
+      console.log('[SW] Push data is text:', event.data.text());
+      notificationData.body = event.data.text() || notificationData.body;
+    }
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon,
+      badge: notificationData.badge,
+      tag: notificationData.tag,
+      data: notificationData.data,
+      requireInteraction: notificationData.requireInteraction,
+      vibrate: [200, 100, 200],
+      actions: [
+        {
+          action: 'open',
+          title: 'Buka Aplikasi',
+        },
+        {
+          action: 'close',
+          title: 'Tutup',
+        },
+      ],
+    })
+  );
+});
+
+// Notification click event - handle user clicking notification
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event);
+
+  event.notification.close();
+
+  if (event.action === 'close') {
+    return;
+  }
+
+  // Default action atau 'open' action
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    }).then((clientList) => {
+      // Cek apakah ada window yang sudah terbuka
+      for (let i = 0; i < clientList.length; i++) {
+        const client = clientList[i];
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Buka window baru jika belum ada
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
