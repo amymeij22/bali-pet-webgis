@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ export default function InstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Debug logging
@@ -109,6 +110,12 @@ export default function InstallPrompt() {
   }, []);
 
   const handleInstall = async () => {
+    // Clear auto-close timer when user interacts
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
+    }
+
     if (deferredPrompt) {
       // Show native install prompt (Android/Chrome)
       try {
@@ -149,6 +156,10 @@ export default function InstallPrompt() {
   };
 
   const handleDismiss = () => {
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = null;
+    }
     setShowPrompt(false);
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
@@ -157,6 +168,22 @@ export default function InstallPrompt() {
   if (isStandalone) {
     return null;
   }
+
+  // Auto-close after 10 seconds if not responded
+  useEffect(() => {
+    if (showPrompt) {
+      autoCloseTimerRef.current = setTimeout(() => {
+        console.log('[PWA] Auto-closing prompt after 10 seconds');
+        handleDismiss();
+      }, 10000); // 10 seconds
+
+      return () => {
+        if (autoCloseTimerRef.current) {
+          clearTimeout(autoCloseTimerRef.current);
+        }
+      };
+    }
+  }, [showPrompt]);
 
   // Show prompt if:
   // 1. Prompt state is true (set by useEffect)
@@ -172,7 +199,7 @@ export default function InstallPrompt() {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-96 pointer-events-auto"
+        className="fixed bottom-4 left-4 right-4 z-[35] md:left-auto md:right-4 md:w-96 pointer-events-auto"
       >
         <div className="glass-panel rounded-xl p-4 shadow-lg border border-border">
           <div className="flex items-start gap-3">

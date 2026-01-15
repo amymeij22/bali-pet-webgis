@@ -116,7 +116,7 @@ self.addEventListener('push', (event) => {
 
   let notificationData = {
     title: 'Prakiraan Baru Tersedia',
-    body: 'Data prakiraan kenyamanan termal terbaru sudah tersedia',
+    body: 'Data prakiraan kenyamanan termal Destinasi Wisata Bali terbaru sudah tersedia. Buka aplikasi untuk melihat peta interaktif.',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     tag: 'new-forecast-batch',

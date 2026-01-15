@@ -101,7 +101,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.12, ease: 'easeOut' }}
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed left-4 bottom-16 z-40 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+        className="md:hidden fixed left-4 bottom-16 z-30 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
         aria-label="Lihat standar PET"
       >
         <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">

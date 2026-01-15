@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, BellOff } from 'lucide-react';
+import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   subscribeToPushNotifications,
@@ -130,17 +130,22 @@ export default function NotificationToggle() {
       size="sm"
       onClick={handleToggle}
       disabled={isLoading}
-      className="gap-2"
+      className="gap-2 h-7 text-[10px] sm:text-xs"
       aria-label={isEnabled ? 'Matikan notifikasi' : 'Aktifkan notifikasi'}
     >
-      {isEnabled ? (
+      {isLoading ? (
         <>
-          <Bell className="w-4 h-4" />
+          <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+          <span className="hidden sm:inline">Memproses...</span>
+        </>
+      ) : isEnabled ? (
+        <>
+          <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
           <span className="hidden sm:inline">Notifikasi Aktif</span>
         </>
       ) : (
         <>
-          <BellOff className="w-4 h-4" />
+          <BellOff className="w-3 h-3 sm:w-4 sm:h-4" />
           <span className="hidden sm:inline">Aktifkan Notifikasi</span>
         </>
       )}

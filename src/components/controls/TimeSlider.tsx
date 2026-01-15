@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { toWitaDate } from '@/lib/timezone';
+import NotificationToggle from '@/components/notifications/NotificationToggle';
 
 interface TimeSliderProps {
   selectedTime: string;
@@ -97,7 +98,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-      className="fixed bottom-4 left-0 right-0 z-20 flex justify-center pointer-events-none px-4"
+      className="fixed bottom-4 left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
     >
       <div className="glass-panel rounded-xl px-3 sm:px-4 py-2 sm:py-3 pointer-events-auto max-w-full">
         {/* Top Row - Date and Time Display */}
@@ -182,6 +183,10 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
           })}
         </div>
 
+        {/* Notification Toggle - Above produced time */}
+        <div className="mt-2 flex justify-center">
+          <NotificationToggle />
+        </div>
         
         {/* Produced time label */}
         {producedAt && (
