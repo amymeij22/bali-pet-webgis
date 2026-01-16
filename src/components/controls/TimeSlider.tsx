@@ -20,14 +20,17 @@ interface TimeSliderProps {
 
 export default function TimeSlider({ selectedTime, times, producedAt, isPlaying, onPlayChange, onTimeChange }: TimeSliderProps) {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasData = times.length > 0;
 
   const currentIndex = useMemo(() => {
+    if (!hasData) return -1;
     return times.findIndex((t) => t === selectedTime);
-  }, [selectedTime, times]);
+  }, [selectedTime, times, hasData]);
 
   const selectedDate = useMemo(() => {
+    if (!hasData || !selectedTime) return new Date();
     return toWitaDate(selectedTime);
-  }, [selectedTime]);
+  }, [selectedTime, hasData]);
 
   // Group forecast times by day
   const days = useMemo(() => {
@@ -48,21 +51,22 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
   }, [times]);
 
   const handlePrev = useCallback(() => {
-    if (currentIndex > 0) {
-      onTimeChange(times[currentIndex - 1]);
-    }
-  }, [currentIndex, onTimeChange, times]);
+    if (!hasData || currentIndex <= 0) return;
+    onTimeChange(times[currentIndex - 1]);
+  }, [currentIndex, onTimeChange, times, hasData]);
 
   const handleNext = useCallback(() => {
+    if (!hasData) return;
     if (currentIndex < times.length - 1) {
       onTimeChange(times[currentIndex + 1]);
     } else {
       // Loop back to start
       onTimeChange(times[0]);
     }
-  }, [currentIndex, onTimeChange, times]);
+  }, [currentIndex, onTimeChange, times, hasData]);
 
   const handleSliderChange = (value: number[]) => {
+    if (!hasData) return;
     const index = value[0];
     if (index >= 0 && index < times.length) {
       onTimeChange(times[index]);
@@ -75,6 +79,14 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
 
   // Handle autoplay
   useEffect(() => {
+    if (!hasData) {
+      // Stop playing if no data
+      if (isPlaying) {
+        onPlayChange(false);
+      }
+      return;
+    }
+
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
         handleNext();
@@ -91,7 +103,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, handleNext]);
+  }, [isPlaying, handleNext, hasData, onPlayChange]);
 
   return (
     <motion.div
@@ -104,11 +116,11 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
         {/* Top Row - Date and Time Display */}
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
           <span className="text-[10px] sm:text-xs font-medium text-foreground">
-            {format(selectedDate, 'EEE, dd MMM', { locale: id })}
+            {hasData ? format(selectedDate, 'EEE, dd MMM', { locale: id }) : '-'}
           </span>
           <span className="text-[10px] sm:text-xs text-muted-foreground">|</span>
           <span className="text-[10px] sm:text-xs font-medium text-primary font-mono">
-            {format(selectedDate, 'HH:mm')} WITA
+            {hasData ? `${format(selectedDate, 'HH:mm')} WITA` : '-'}
           </span>
         </div>
 
@@ -119,7 +131,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
             size="icon"
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={handlePrev}
-            disabled={currentIndex === 0}
+            disabled={!hasData || currentIndex === 0}
             aria-label="Waktu sebelumnya"
           >
             <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -130,6 +142,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
             size="icon"
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={togglePlay}
+            disabled={!hasData}
             aria-label={isPlaying ? "Stop" : "Play"}
           >
             {isPlaying ? (
@@ -140,11 +153,12 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
           </Button>
 
           <Slider
-            value={[Math.max(0, currentIndex)]}
+            value={hasData ? [Math.max(0, currentIndex)] : [0]}
             min={0}
             max={Math.max(0, times.length - 1)}
             step={1}
             onValueChange={handleSliderChange}
+            disabled={!hasData}
             className="w-32 sm:w-48"
           />
 
@@ -153,7 +167,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
             size="icon"
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={handleNext}
-            disabled={currentIndex === times.length - 1 && !isPlaying}
+            disabled={!hasData || (currentIndex === times.length - 1 && !isPlaying)}
             aria-label="Waktu berikutnya"
           >
             <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -162,25 +176,31 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
 
         {/* Day Labels */}
         <div className="flex justify-center gap-1 mt-2">
-          {days.map((day, index) => {
-            const isActive = isSameDay(day.date, selectedDate);
-            const isToday = isSameDay(day.date, toWitaDate(new Date()));
-            
-            return (
-              <button
-                key={index}
-                onClick={() => onTimeChange(day.times[0])}
-                className={cn(
-                  "text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : "text-muted-foreground hover:bg-secondary"
-                )}
-              >
-                {isToday ? 'Hari Ini' : format(day.date, 'dd/MM', { locale: id })}
-              </button>
-            );
-          })}
+          {hasData && days.length > 0 ? (
+            days.map((day, index) => {
+              const isActive = isSameDay(day.date, selectedDate);
+              const isToday = isSameDay(day.date, toWitaDate(new Date()));
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => onTimeChange(day.times[0])}
+                  className={cn(
+                    "text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded transition-colors",
+                    isActive
+                      ? "bg-primary text-primary-foreground font-medium"
+                      : "text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  {isToday ? 'Hari Ini' : format(day.date, 'dd/MM', { locale: id })}
+                </button>
+              );
+            })
+          ) : (
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground px-1.5 sm:px-2 py-0.5">
+              -
+            </span>
+          )}
         </div>
 
         {/* Notification Toggle - Above produced time */}
@@ -189,11 +209,9 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
         </div>
         
         {/* Produced time label */}
-        {producedAt && (
-          <div className="mt-1 text-center text-[10px] sm:text-xs text-muted-foreground">
-            Waktu Produksi: {format(toWitaDate(producedAt), 'dd MMM yyyy HH:mm', { locale: id })} WITA
-          </div>
-        )}
+        <div className="mt-1 text-center text-[10px] sm:text-xs text-muted-foreground">
+          Waktu Produksi: {producedAt ? `${format(toWitaDate(producedAt), 'dd MMM yyyy HH:mm', { locale: id })} WITA` : '-'}
+        </div>
         
       </div>
     </motion.div>

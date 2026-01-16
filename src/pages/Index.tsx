@@ -294,17 +294,15 @@ const Index = () => {
         onStandardChange={handleStandardChange}
       />
 
-      {/* Bottom - Time Slider */}
-      {times.length > 0 && (
-        <TimeSlider
-          selectedTime={selectedTime}
-          times={times}
-          producedAt={producedAt}
-          isPlaying={isPlaying}
-          onPlayChange={setIsPlaying}
-          onTimeChange={handleTimeChange}
-        />
-      )}
+      {/* Bottom - Time Slider - Always visible */}
+      <TimeSlider
+        selectedTime={selectedTime}
+        times={times}
+        producedAt={producedAt}
+        isPlaying={isPlaying}
+        onPlayChange={setIsPlaying}
+        onTimeChange={handleTimeChange}
+      />
 
       {/* Data Source Card */}
       <DataSourceCard />
