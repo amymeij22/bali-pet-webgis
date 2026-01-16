@@ -20,10 +20,22 @@ export interface ForecastBatch {
 export interface Village {
   id: string;
   village_name: string;
-  destination_name: string | null;
-  kdepum_code: string | null;
+  kdepum_code: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface Destination {
+  id: string;
+  village_id: string;
+  destination_name: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Combined interface for villages with their destinations
+export interface VillageWithDestinations extends Village {
+  destinations: Destination[];
 }
 
 export interface WeatherForecast {
@@ -67,14 +79,94 @@ export async function getForecastTimes(batchId: string): Promise<string[]> {
   return times;
 }
 
-// Get villages list for sidebar
+// Get villages list (desa/kdepum only)
 export async function getVillages(): Promise<Village[]> {
   const { data, error } = await supabase
     .from('villages')
-    .select('id, village_name, destination_name, kdepum_code')
+    .select('id, village_name, kdepum_code, created_at, updated_at')
+    .order('village_name', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+// Get all destinations
+export async function getDestinations(): Promise<Destination[]> {
+  const { data, error } = await supabase
+    .from('destinations')
+    .select('id, village_id, destination_name, created_at, updated_at')
     .order('destination_name', { ascending: true });
   if (error) throw error;
   return data ?? [];
+}
+
+// Get villages with their destinations (for map and popup)
+export async function getVillagesWithDestinations(): Promise<VillageWithDestinations[]> {
+  const { data, error } = await supabase
+    .from('villages')
+    .select(`
+      id,
+      village_name,
+      kdepum_code,
+      created_at,
+      updated_at,
+      destinations (
+        id,
+        village_id,
+        destination_name,
+        created_at,
+        updated_at
+      )
+    `)
+    .order('village_name', { ascending: true });
+  
+  if (error) throw error;
+  
+  // Transform the data to match our interface
+  return (data ?? []).map((v: any) => ({
+    id: v.id,
+    village_name: v.village_name,
+    kdepum_code: v.kdepum_code,
+    created_at: v.created_at,
+    updated_at: v.updated_at,
+    destinations: (v.destinations || []).map((d: any) => ({
+      id: d.id,
+      village_id: d.village_id,
+      destination_name: d.destination_name,
+      created_at: d.created_at,
+      updated_at: d.updated_at,
+    })),
+  }));
+}
+
+// Get all destinations with village info (for sidebar - flat list)
+export async function getDestinationsWithVillage(): Promise<Array<Destination & { village_name: string; kdepum_code: string }>> {
+  const { data, error } = await supabase
+    .from('destinations')
+    .select(`
+      id,
+      village_id,
+      destination_name,
+      created_at,
+      updated_at,
+      villages (
+        village_name,
+        kdepum_code
+      )
+    `)
+    .order('destination_name', { ascending: true });
+  
+  if (error) throw error;
+  
+  // Transform the data
+  return (data ?? []).map((d: any) => ({
+    id: d.id,
+    village_id: d.village_id,
+    destination_name: d.destination_name,
+    created_at: d.created_at,
+    updated_at: d.updated_at,
+    village_name: d.villages?.village_name || '',
+    kdepum_code: d.villages?.kdepum_code || '',
+  }));
 }
 
 // Get all forecasts for a batch once (used to avoid repeated queries per time)

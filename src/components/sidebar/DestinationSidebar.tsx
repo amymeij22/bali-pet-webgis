@@ -14,11 +14,12 @@ interface DestinationSidebarProps {
     villageName: string
   ) => void;
   activeVillage?: string | null;
-  villages: Array<{
+  destinations: Array<{
     id: string;
+    village_id: string;
+    destination_name: string;
     village_name: string;
-    destination_name: string | null;
-    kdepum_code: string | null;
+    kdepum_code: string;
   }>;
   choropleth: Map<string, { pet_value: number }>;
 }
@@ -27,7 +28,7 @@ export default function DestinationSidebar({
   petStandard,
   onDestinationClick,
   activeVillage,
-  villages,
+  destinations,
   choropleth,
 }: DestinationSidebarProps) {
   const isMobile = useIsMobile();
@@ -77,15 +78,16 @@ export default function DestinationSidebar({
               </h2>
             </div>
             <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {villages.length} lokasi wisata di Bali
+              {destinations.length} lokasi wisata di Bali
             </p>
           </div>
 
           {/* List */}
           <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
-            {villages.map((village) => {
-              const forecast = choropleth.get(village.id);
-              const isActive = activeVillage === village.id;
+            {destinations.map((destination) => {
+              // Forecast is per village (kdepum), not per destination
+              const forecast = choropleth.get(destination.village_id);
+              const isActive = activeVillage === destination.village_id;
 
               let category: string | null = null;
               if (forecast) {
@@ -100,17 +102,14 @@ export default function DestinationSidebar({
                 }
               }
 
-              const destinationName =
-                village.destination_name || village.village_name;
-
               return (
                 <button
-                  key={village.id}
+                  key={destination.id}
                   onClick={() =>
                     onDestinationClick(
-                      village.id,
-                      destinationName,
-                      village.village_name
+                      destination.village_id, // Use village_id because forecast is per village
+                      destination.destination_name,
+                      destination.village_name
                     )
                   }
                   className={cn(
@@ -130,16 +129,20 @@ export default function DestinationSidebar({
                       }}
                     />
                     <span className="truncate text-xs sm:text-sm font-medium">
-                      {destinationName}
+                      {destination.destination_name}
                     </span>
                   </div>
 
-                  {forecast && (
+                  {forecast ? (
                     <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
                       <Thermometer className="w-3 h-3" />
                       <span className="font-mono">
                         {forecast.pet_value}°
                       </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground/60 flex-shrink-0">
+                      <span className="text-[9px]">Belum tersedia</span>
                     </div>
                   )}
                 </button>

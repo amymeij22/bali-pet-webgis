@@ -36,6 +36,10 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               <span className="text-primary">•</span>
               <span>Batas Administrasi Desa/Kelurahan Badan Informasi Geospasial</span>
             </li>
+            <li className="flex gap-1.5">
+              <span className="text-primary">•</span>
+              <span>Daya Tarik Wisata Dinas Pariwisata Provinsi Bali</span>
+            </li>
           </ul>
         </div>
       </motion.div>
@@ -95,6 +99,10 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
                   <span>Batas Administrasi Desa/Kelurahan Badan Informasi Geospasial</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Daya Tarik Wisata Dinas Pariwisata Provinsi Bali</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
