@@ -421,6 +421,7 @@ const Mockup = () => {
       <PETLegend
         standard={petStandard}
         onStandardChange={handleStandardChange}
+        isMockup={true}
       />
 
       {/* Bottom - Time Slider */}

@@ -14,10 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface PETLegendProps {
   standard: PETStandard;
   onStandardChange: (standard: PETStandard) => void;
+  isMockup?: boolean;
 }
 
 const CATEGORY_ORDER: ThermalCategory[] = [
@@ -32,7 +39,7 @@ const CATEGORY_ORDER: ThermalCategory[] = [
   'very_cold',
 ];
 
-export default function PETLegend({ standard, onStandardChange }: PETLegendProps) {
+export default function PETLegend({ standard, onStandardChange, isMockup = false }: PETLegendProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const ranges = PET_RANGES[standard];
@@ -188,34 +195,132 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative z-10 glass-panel rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto mx-auto"
+              className="relative z-10 glass-panel rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] flex flex-col mx-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
               <button
                 onClick={() => setIsInfoOpen(false)}
-                className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors"
+                className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-secondary/50 transition-colors z-10"
                 aria-label="Tutup"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
 
-              {/* Content */}
-              <div className="px-2 sm:px-4">
-                <h3 className="text-base sm:text-lg font-semibold text-foreground mb-4 text-center">
-                  Tentang Kenyamanan Termal (PET)
+              {/* Header */}
+              <div className="px-2 sm:px-4 mb-4 flex-shrink-0">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground text-center">
+                  Frequently Asked Question (FAQ)
                 </h3>
-                <div className="text-xs sm:text-sm leading-relaxed space-y-3 text-justify">
-                  <p>
-                    Kenyamanan termal menunjukkan tingkat kenyamanan tubuh manusia saat berada di luar ruang, yang dipengaruhi oleh suhu udara, kelembapan, angin, dan radiasi matahari.
-                  </p>
-                  <p>
-                    Pada WebGIS ini, kondisi tersebut ditampilkan menggunakan indeks <strong className="text-foreground">Physiological Equivalent Temperature (PET)</strong> (°C), yaitu suhu yang dirasakan tubuh berdasarkan gabungan faktor cuaca.
-                  </p>
-                  <p>
-                    Nilai PET ditampilkan untuk setiap lokasi dan waktu prakiraan guna membantu memahami variasi kenyamanan termal, dan bersifat informatif, bukan sebagai diagnosis medis atau rekomendasi aktivitas.
-                  </p>
-                </div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="px-2 sm:px-4 overflow-y-auto flex-1">
+                <Accordion type="single" collapsible className="w-full space-y-0">
+                  <AccordionItem value="item-1" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Lorem ipsum dolor sit amet consectetur?' : 'Apa itu kenyamanan termal?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.'
+                      ) : (
+                        'Kenyamanan termal adalah tingkat "nyaman atau tidaknya" tubuh saat berada di luar ruang, yang dipengaruhi oleh suhu udara, kelembapan, angin, dan radiasi matahari. Di lingkungan terbuka seperti pantai atau taman, radiasi matahari sering membuat kondisi terasa lebih panas dibanding sekadar angka suhu udara.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-2" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Excepteur sint occaecat cupidatat non proident?' : 'Apa itu indeks PET dan bagaimana membacanya?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.'
+                      ) : (
+                        'PET (Physiological Equivalent Temperature) adalah indeks biometeorologi dalam satuan °C yang merangkum pengaruh suhu, kelembapan, angin, dan radiasi menjadi "suhu ekuivalen" yang merepresentasikan beban panas yang dirasakan tubuh. Semakin tinggi nilai PET, umumnya semakin besar potensi stres panas; sebaliknya nilai rendah menunjukkan kondisi lebih sejuk/dingin.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-3" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'At vero eos et accusamus et iusto odio dignissimos?' : 'Kenapa ada pilihan standar "Temperate" dan "(Sub)Tropis"?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+                      ) : (
+                        'Standar klasifikasi berbeda karena tingkat adaptasi (aklimatisasi) terhadap panas bisa berbeda antar kelompok. Pilihan Temperate cenderung lebih konservatif (lebih cepat memberi sinyal panas) dan dapat relevan bagi wisatawan dari iklim sedang, sedangkan (Sub)Tropis lebih representatif bagi pengguna yang terbiasa iklim panas-lembap. Mengganti standar akan mengubah legenda dan pewarnaan peta.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-4" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Nam libero tempore cum soluta nobis est eligendi?' : 'Bagaimana cara menggunakan peta dan slider waktu?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.'
+                      ) : (
+                        'Peta menampilkan poligon wilayah dengan warna sesuai kelas PET pada waktu yang dipilih. Gunakan slider waktu untuk melihat perubahan prediksi setiap 3 jam hingga beberapa hari ke depan; saat waktu berubah, warna peta dan nilai pada lokasi ikut diperbarui sesuai prakiraan pada waktu tersebut.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-5" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Temporibus autem quibusdam et aut officiis debitis?' : 'Apa isi pop-up saat saya klik suatu lokasi?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam.'
+                      ) : (
+                        'Pop-up menampilkan nilai PET, kelas kenyamanan termal, dan parameter cuaca pendukung (misalnya suhu udara, kelembapan, angin, kondisi cuaca) untuk waktu prakiraan yang sedang dipilih. Informasi ini membantu memahami "kenapa" suatu lokasi tampak lebih panas/sejuk pada peta.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-6" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Itaque earum rerum hic tenetur a sapiente delectus?' : 'Seberapa sering data diperbarui dan apa itu "waktu produksi"?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt.'
+                      ) : (
+                        'Data diperbarui secara berkala mengikuti pembaruan prakiraan BMKG, lalu diproses menjadi satu "batch" (paket prediksi terbaru). WebGIS menampilkan waktu produksi terbaru sehingga informasi yang Anda lihat merupakan hasil pemrosesan prakiraan paling mutakhir pada saat itu.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-7" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Omnis voluptas assumenda est omnis dolor repellendus?' : 'Apakah informasi ini bisa dijadikan acuan medis atau rekomendasi aktivitas?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Temporibus autem quibusdam et aut officiis debitis aut rerum necessitatibus saepe eveniet ut et voluptates repudiandae sint et molestiae non recusandae. Itaque earum rerum hic tenetur a sapiente delectus, ut aut reiciendis voluptatibus maiores alias consequatur aut perferendis doloribus asperiores repellat.'
+                      ) : (
+                        'Tidak. Informasi pada WebGIS bersifat informatif dan interpretatif untuk membantu memahami kondisi termal lingkungan, bukan diagnosis medis maupun rekomendasi perilaku spesifik. Kondisi kenyamanan tiap orang dapat berbeda, sehingga keputusan aktivitas tetap disesuaikan dengan kondisi dan kebutuhan masing-masing.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-8" className="border-b-0">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {isMockup ? 'Quis autem vel eum iure reprehenderit qui in ea voluptate?' : 'Apa fungsi PWA dan notifikasi?'}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {isMockup ? (
+                        'Vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi.'
+                      ) : (
+                        'PWA memungkinkan WebGIS digunakan lebih praktis di perangkat pengguna seperti aplikasi. Notifikasi bersifat opsional (opt-in) dan hanya memberi tahu saat prediksi/batch terbaru tersedia, agar Anda tidak perlu mengecek manual.'
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </div>
             </motion.div>
           </motion.div>
