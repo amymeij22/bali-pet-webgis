@@ -124,6 +124,12 @@ export const PET_RANGES: Record<PETStandard, Record<ThermalCategory, { min: numb
   },
 };
 
+export function formatPetClassRange(standard: PETStandard, category: ThermalCategory): string {
+  const r = PET_RANGES[standard][category];
+  const maxText = r.max === 999 ? '∞' : String(r.max);
+  return `${r.labelId} (${r.min}-${maxText})`;
+}
+
 // Visitor notes sesuai PRD
 export const VISITOR_NOTES: Record<ThermalCategory, string> = {
   very_hot: 'Gunakan sunscreen SPF 30+, topi lebar, dan hidrasi setiap 15-20 menit. Hindari aktivitas berat siang hari.',
@@ -233,7 +239,7 @@ export function generateWeatherForecasts(): WeatherForecast[] {
   let idCounter = 1;
 
   VILLAGES.forEach((village, villageIdx) => {
-    const base = BASE_FORECASTS[village.id] || { baseT: 26, baseHu: 80, basePET: 25.0, elevation: 'midland' };
+    const base = BASE_FORECASTS[village.id]!;
     
     FORECAST_TIMES.forEach((time, timeIdx) => {
       const seed = villageIdx * 100 + timeIdx;
@@ -263,7 +269,7 @@ export function generateWeatherForecasts(): WeatherForecast[] {
       const weatherCode = hour >= 12 && hour < 18 && seededRandom(seed + 6) > 0.6 
         ? (seededRandom(seed + 7) > 0.7 ? 61 : 60) 
         : Math.floor(seededRandom(seed + 8) * 4);
-      const weather = WEATHER_MAP[weatherCode] || WEATHER_MAP[3];
+      const weather = WEATHER_MAP[weatherCode];
       const tp = weatherCode >= 60 ? Math.round(seededRandom(seed + 9) * 5 * 10) / 10 : 0;
       const vs = Math.round(8000 + seededRandom(seed + 10) * 4000);
       
@@ -305,8 +311,8 @@ export function generateWeatherForecasts(): WeatherForecast[] {
         pet_value: pet,
         thermal_category_temperate: categoryTemperate,
         thermal_category_tropical: categoryTropical,
-        class_temperate: PET_RANGES.temperate[categoryTemperate].labelId + ` (${PET_RANGES.temperate[categoryTemperate].min}-${PET_RANGES.temperate[categoryTemperate].max === 999 ? '∞' : PET_RANGES.temperate[categoryTemperate].max})`,
-        class_tropical: PET_RANGES.tropical[categoryTropical].labelId + ` (${PET_RANGES.tropical[categoryTropical].min}-${PET_RANGES.tropical[categoryTropical].max === 999 ? '∞' : PET_RANGES.tropical[categoryTropical].max})`,
+        class_temperate: formatPetClassRange('temperate', categoryTemperate),
+        class_tropical: formatPetClassRange('tropical', categoryTropical),
       });
     });
   });

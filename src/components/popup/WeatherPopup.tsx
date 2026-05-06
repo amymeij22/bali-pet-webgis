@@ -72,7 +72,7 @@ export default function WeatherPopup({
     // If DB stores a signed Supabase Storage URL, try to normalize to public URL.
     // This avoids expiry issues *if* the bucket is public.
     if (raw.includes('/storage/v1/object/sign/')) {
-      const noQuery = raw.split('?')[0] ?? raw;
+      const noQuery = raw.split('?')[0];
       return noQuery.replace('/storage/v1/object/sign/', '/storage/v1/object/public/');
     }
 
@@ -93,13 +93,13 @@ export default function WeatherPopup({
   const canGoNext = currentIndex >= 0 && currentIndex < times.length - 1;
 
   const handlePrev = () => {
-    if (currentIndex > 0) onTimeChange(times[currentIndex - 1]);
+    const prev = currentIndex > 0 ? times[currentIndex - 1] : null;
+    if (prev) onTimeChange(prev);
   };
 
   const handleNext = () => {
-    if (currentIndex >= 0 && currentIndex < times.length - 1) {
-      onTimeChange(times[currentIndex + 1]);
-    }
+    const next = currentIndex >= 0 && currentIndex < times.length - 1 ? times[currentIndex + 1] : null;
+    if (next) onTimeChange(next);
   };
 
   // Get current date/time from selected time or use current date
@@ -189,7 +189,7 @@ export default function WeatherPopup({
                 <div className="mt-1">
                   <select
                     className="w-full h-8 rounded-md border border-border bg-background px-2 text-[11px] text-foreground"
-                    value={selectedDestinationId ?? destinations[0]?.id ?? ''}
+                    value={selectedDestinationId ?? destinations[0]!.id}
                     onChange={(e) => onDestinationChange?.(e.target.value)}
                     aria-label={t('popup_select_destination_aria')}
                   >

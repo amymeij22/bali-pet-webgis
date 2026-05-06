@@ -15,4 +15,27 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    globals: true,
+    css: true,
+    restoreMocks: true,
+    clearMocks: true,
+    mockReset: true,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage",
+      exclude: [
+        "dist/**",
+        "public/**",
+        "supabase/**",
+        "db/**",
+        "src/components/ui/**",
+        "src/components/popup/WeatherPopup.tsx",
+        "**/*.d.ts",
+      ],
+    },
+  },
 }));
