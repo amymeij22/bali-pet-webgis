@@ -1,23 +1,23 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Info, X } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 interface DataSourceCardProps {
   className?: string;
 }
 
 export default function DataSourceCard({ className }: DataSourceCardProps) {
+  const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
   const [isOpen, setIsOpen] = useState(false);
   const [showDesktopCard, setShowDesktopCard] = useState(true);
 
   return (
     <>
       {/* Desktop: Always visible card */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, type: 'spring', stiffness: 200 }}
+      <div
         className={cn(
           "hidden md:block fixed bottom-4 right-4 z-20",
           className
@@ -25,33 +25,37 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
       >
         <div className="glass-panel rounded-xl px-4 py-3 w-[280px]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-foreground">Sumber Data</span>
+            <span className="text-xs font-semibold text-foreground">{t('data_sources')}</span>
           </div>
           <ul className="text-[10px] text-muted-foreground space-y-1.5 leading-relaxed">
             <li className="flex gap-1.5">
               <span className="text-primary">•</span>
-              <span>Data Prakiraan Cuaca Terbuka Badan Meteorologi Klimatologi dan Geofisika</span>
+              <span>{t('data_source_bmkg')}</span>
             </li>
             <li className="flex gap-1.5">
               <span className="text-primary">•</span>
-              <span>Batas Administrasi Desa/Kelurahan Badan Informasi Geospasial</span>
+              <span>{t('data_source_big')}</span>
             </li>
             <li className="flex gap-1.5">
               <span className="text-primary">•</span>
-              <span>Daya Tarik Wisata Dinas Pariwisata Provinsi Bali</span>
+              <span>{t('data_source_disparda')}</span>
+            </li>
+            <li className="flex gap-1.5">
+              <span className="text-primary">•</span>
+              <span>{t('data_source_kemendagri')}</span>
             </li>
           </ul>
         </div>
-      </motion.div>
+      </div>
 
       {/* Mobile: Overlay button */}
       <motion.button
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
+        animate={reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
         transition={{ delay: 0.4 }}
         onClick={() => setIsOpen(true)}
         className="md:hidden fixed left-4 bottom-4 z-30 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
-        aria-label="Lihat sumber data"
+        aria-label={t('view_data_sources')}
       >
         <Info className="w-5 h-5 text-muted-foreground" />
       </motion.button>
@@ -60,7 +64,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0 }}
+            initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="md:hidden fixed inset-0 z-50 flex items-end justify-center p-4"
@@ -76,14 +80,14 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              initial={reduceMotion ? false : { y: 100, opacity: 0 }}
+              animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
               className="relative z-10 glass-panel rounded-xl px-4 py-4 w-full max-w-sm mb-4"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-foreground">Sumber Data</span>
+                <span className="text-sm font-semibold text-foreground">{t('data_sources')}</span>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="p-1 rounded-lg hover:bg-secondary/50 transition-colors"
@@ -94,19 +98,19 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               <ul className="text-xs text-muted-foreground space-y-2 leading-relaxed">
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Data Prakiraan Cuaca Terbuka Badan Meteorologi Klimatologi dan Geofisika</span>
+                  <span>{t('data_source_bmkg')}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Batas Administrasi Desa/Kelurahan Badan Informasi Geospasial</span>
+                  <span>{t('data_source_big')}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Daya Tarik Wisata Dinas Pariwisata Provinsi Bali</span>
+                  <span>{t('data_source_disparda')}</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
-                  <span>Kode, Data Wilayah Administrasi Pemerintahan, dan Pulau Menteri Dalam Negeri</span>
+                  <span>{t('data_source_kemendagri')}</span>
                 </li>
               </ul>
             </motion.div>

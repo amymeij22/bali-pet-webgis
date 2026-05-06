@@ -1,9 +1,12 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import logoBmkg from "@/assets/logo-bmkg.webp";
 import logoStmkg from "@/assets/logo-stmkg.png";
 import logoInstrumentasi from "@/assets/logo-instrumentasi.png";
+import { useI18n } from "@/lib/i18n";
 
 export default function MapHeader() {
+  const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
   const logos = [
     { src: logoBmkg, alt: "Logo BMKG" },
     { src: logoStmkg, alt: "Logo STMKG" },
@@ -12,9 +15,9 @@ export default function MapHeader() {
 
   return (
     <motion.header
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.1 }}
+      initial={reduceMotion ? false : { y: -50, opacity: 0 }}
+      animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+      transition={reduceMotion ? { duration: 0 } : { delay: 0.1 }}
       className="map-header fixed top-0 left-0 right-0 z-40 flex flex-col items-center pt-3 pointer-events-none"
     >
       {/* Logo Row */}
@@ -34,12 +37,12 @@ export default function MapHeader() {
         <h1 className="text-[11px] sm:text-sm md:text-base font-semibold text-foreground text-center leading-snug">
           {/* Baris 1 */}
           <span className="block">
-            Prediksi Kenyamanan Termal Berbasis Indeks <em className="italic">Physiological Equivalent Temperature</em>
+            {t('thermal_comfort_title_line1')}
           </span>
 
           {/* Baris 2 */}
           <span className="block">
-            untuk Destinasi Wisata di Provinsi Bali
+            {t('thermal_comfort_title_line2')}
           </span>
         </h1>
       </div>

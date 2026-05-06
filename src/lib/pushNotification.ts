@@ -22,6 +22,7 @@ export interface StoredSubscription {
 // VAPID public key - harus di-set di environment variable
 // Untuk production, generate VAPID keys menggunakan: npm install -g web-push && web-push generate-vapid-keys
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
+const LAST_ENDPOINT_STORAGE_KEY = 'push:lastEndpoint';
 
 /**
  * Convert base64 URL to Uint8Array
@@ -54,6 +55,12 @@ export async function subscribeToPushNotifications(): Promise<PushSubscription |
 
     if (subscription) {
       console.log('[Push] Already subscribed:', subscription.endpoint);
+      // Ensure DB has this subscription as active (can be out-of-sync).
+      try {
+        await saveSubscriptionToDatabase(subscription);
+      } catch (e) {
+        console.warn('[Push] Failed to sync existing subscription to DB:', e);
+      }
       return subscription;
     }
 
@@ -98,6 +105,15 @@ export async function unsubscribeFromPushNotifications(): Promise<boolean> {
 
     if (!subscription) {
       console.log('[Push] No subscription to unsubscribe');
+      // Best-effort: if we have a last known endpoint, mark it inactive in DB.
+      const lastEndpoint = localStorage.getItem(LAST_ENDPOINT_STORAGE_KEY);
+      if (lastEndpoint) {
+        try {
+          await removePushSubscription(lastEndpoint);
+        } catch (e) {
+          console.warn('[Push] Failed to deactivate last known subscription in DB:', e);
+        }
+      }
       return true;
     }
 
@@ -120,6 +136,7 @@ export async function unsubscribeFromPushNotifications(): Promise<boolean> {
  */
 export async function isSubscribed(): Promise<boolean> {
   try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return false;
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     return subscription !== null;
@@ -166,6 +183,7 @@ async function saveSubscriptionToDatabase(subscription: PushSubscription): Promi
     }
 
     console.log('[Push] Subscription saved to database');
+    localStorage.setItem(LAST_ENDPOINT_STORAGE_KEY, subscriptionData.endpoint);
   } catch (error) {
     console.error('[Push] Save subscription error:', error);
     throw error;
@@ -184,6 +202,7 @@ async function removeSubscriptionFromDatabase(endpoint: string): Promise<void> {
     }
 
     console.log('[Push] Subscription removed from database');
+    localStorage.setItem(LAST_ENDPOINT_STORAGE_KEY, endpoint);
   } catch (error) {
     console.error('[Push] Remove subscription error:', error);
     throw error;

@@ -1,7 +1,7 @@
 // Service Worker untuk PWA
 // Cache version - update ini untuk force refresh cache
-const CACHE_NAME = 'bali-pet-v1';
-const RUNTIME_CACHE = 'bali-pet-runtime-v1';
+const CACHE_NAME = 'bali-pet-v2';
+const RUNTIME_CACHE = 'bali-pet-runtime-v2';
 
 // Assets yang akan di-cache saat install
 const PRECACHE_ASSETS = [
@@ -9,6 +9,7 @@ const PRECACHE_ASSETS = [
   '/index.html',
   '/data/destinasi_wisata_bali.geojson',
   '/favicon.ico',
+  '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
 ];
@@ -46,7 +47,77 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - network first, fallback to cache
+function isHtmlRequest(request) {
+  return request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html');
+}
+
+function isStaticAsset(url) {
+  return (
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/assets/') ||
+      url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.css') ||
+      url.pathname.endsWith('.woff2') ||
+      url.pathname.endsWith('.png') ||
+      url.pathname.endsWith('.webp') ||
+      url.pathname.endsWith('.svg'))
+  );
+}
+
+function isGeoJson(url) {
+  return url.origin === self.location.origin && url.pathname.endsWith('.geojson');
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    // Cache only successful same-origin basic responses
+    if (response && response.status === 200 && response.type === 'basic') {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (e) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    // SPA fallback
+    if (isHtmlRequest(request)) return caches.match('/index.html');
+    throw e;
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response && response.status === 200 && response.type === 'basic') {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  // If we have cache, serve it immediately and refresh in background.
+  if (cached) {
+    eventWaitUntilSafe(networkPromise);
+    return cached;
+  }
+  const network = await networkPromise;
+  return network || (await caches.match(request));
+}
+
+function eventWaitUntilSafe(promise) {
+  // no-op helper: fetch handler may call respondWith before waitUntil.
+  // We only use this for background refresh; if it rejects, ignore.
+  promise?.catch?.(() => {});
+}
+
+// Fetch event - best practice:
+// - HTML navigations: network-first (fast updates), fallback cache/offline
+// - Build assets: cache-first (hashed), with runtime cache
+// - GeoJSON: stale-while-revalidate
+// - Supabase API: always network (skip)
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -66,40 +137,67 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
-        // Return cached version if available
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+  // HTML navigation: network-first
+  if (isHtmlRequest(request)) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
 
-        // Fetch from network
-        return fetch(request)
+  // GeoJSON: stale-while-revalidate
+  if (isGeoJson(url)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(RUNTIME_CACHE);
+        const cached = await cache.match(request);
+        const network = fetch(request)
           .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+            if (response && response.status === 200 && response.type === 'basic') {
+              cache.put(request, response.clone());
             }
-
-            // Clone response untuk cache
-            const responseToCache = response.clone();
-
-            // Cache response
-            caches.open(RUNTIME_CACHE)
-              .then((cache) => {
-                cache.put(request, responseToCache);
-              });
-
             return response;
           })
-          .catch(() => {
-            // Fallback untuk HTML pages
-            if (request.headers.get('accept').includes('text/html')) {
-              return caches.match('/index.html');
-            }
-          });
-      })
+          .catch(() => null);
+
+        if (cached) {
+          event.waitUntil(network);
+          return cached;
+        }
+        const res = await network;
+        return res || (await caches.match(request));
+      })()
+    );
+    return;
+  }
+
+  // Static assets: cache-first (hashed assets are safe to cache)
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(RUNTIME_CACHE);
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        const response = await fetch(request);
+        if (response && response.status === 200 && response.type === 'basic') {
+          cache.put(request, response.clone());
+        }
+        return response;
+      })()
+    );
+    return;
+  }
+
+  // Default: try cache then network
+  event.respondWith(
+    (async () => {
+      const cached = await caches.match(request);
+      if (cached) return cached;
+      const response = await fetch(request);
+      if (response && response.status === 200 && response.type === 'basic') {
+        const cache = await caches.open(RUNTIME_CACHE);
+        cache.put(request, response.clone());
+      }
+      return response;
+    })()
   );
 });
 

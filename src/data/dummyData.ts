@@ -56,6 +56,35 @@ export type ThermalCategory =
 
 export type PETStandard = 'temperate' | 'tropical';
 
+// Klasifikasi PET yang konsisten dengan cloudrun (tanpa overlap boundary)
+export function classifyPet(petValue: number, standard: PETStandard): ThermalCategory {
+  const p = Number(petValue);
+  if (!Number.isFinite(p)) return 'neutral';
+
+  if (standard === 'temperate') {
+    if (p > 41) return 'very_hot';
+    if (p >= 35 && p <= 41) return 'hot';
+    if (p >= 29 && p < 35) return 'warm';
+    if (p >= 23 && p < 29) return 'slight_warm';
+    if (p >= 18 && p < 23) return 'neutral';
+    if (p >= 13 && p < 18) return 'slight_cool';
+    if (p >= 8 && p < 13) return 'cool';
+    if (p >= 4 && p < 8) return 'cold';
+    return 'very_cold';
+  }
+
+  // tropical / sub_tropic
+  if (p > 42) return 'very_hot';
+  if (p >= 38 && p <= 42) return 'hot';
+  if (p >= 34 && p < 38) return 'warm';
+  if (p >= 30 && p < 34) return 'slight_warm';
+  if (p >= 26 && p < 30) return 'neutral';
+  if (p >= 22 && p < 26) return 'slight_cool';
+  if (p >= 18 && p < 22) return 'cool';
+  if (p >= 14 && p < 18) return 'cold';
+  return 'very_cold';
+}
+
 // PET color mapping sesuai PRD
 export const PET_COLORS: Record<ThermalCategory, string> = {
   very_hot: '#800000',
@@ -154,13 +183,7 @@ function seededRandom(seed: number): number {
 
 // Get thermal category based on PET value and standard
 function getCategoryFromPET(petValue: number, standard: PETStandard): ThermalCategory {
-  const ranges = PET_RANGES[standard];
-  for (const [category, range] of Object.entries(ranges)) {
-    if (petValue >= range.min && petValue < range.max) {
-      return category as ThermalCategory;
-    }
-  }
-  return 'neutral';
+  return classifyPet(petValue, standard);
 }
 
 // Weather descriptions mapping

@@ -4,23 +4,27 @@ import { Button } from '@/components/ui/button';
 import {
   subscribeToPushNotifications,
   unsubscribeFromPushNotifications,
-  isSubscribed,
   isPushNotificationSupported,
   getNotificationPermission,
+  getCurrentSubscription,
 } from '@/lib/pushNotification';
 import { useToast } from '@/hooks/use-toast';
+import { useI18n } from '@/lib/i18n';
+
+type NotifStatus = 'active' | 'inactive' | 'blocked';
 
 export default function NotificationToggle() {
-  const [isEnabled, setIsEnabled] = useState(false);
+  const { t } = useI18n();
+  const [status, setStatus] = useState<NotifStatus>('inactive');
   const [isLoading, setIsLoading] = useState(true);
   const [isSupported, setIsSupported] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    checkSubscriptionStatus();
+    void refreshStatus();
   }, []);
 
-  const checkSubscriptionStatus = async () => {
+  const refreshStatus = async () => {
     setIsLoading(true);
     
     const supported = isPushNotificationSupported();
@@ -33,13 +37,13 @@ export default function NotificationToggle() {
 
     const permission = await getNotificationPermission();
     if (permission === 'denied') {
-      setIsEnabled(false);
+      setStatus('blocked');
       setIsLoading(false);
       return;
     }
 
-    const subscribed = await isSubscribed();
-    setIsEnabled(subscribed);
+    const sub = await getCurrentSubscription();
+    setStatus(sub ? 'active' : 'inactive');
     setIsLoading(false);
   };
 
@@ -49,61 +53,61 @@ export default function NotificationToggle() {
     setIsLoading(true);
 
     try {
-      if (isEnabled) {
+      // Always re-check real state before toggling (avoids stale UI).
+      const permission = await getNotificationPermission();
+      if (permission === 'denied') {
+        setStatus('blocked');
+        toast({
+          title: t('toast_perm_denied_title'),
+          description: t('toast_perm_denied_desc'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const currentSub = await getCurrentSubscription();
+      const isReallyActive = !!currentSub && permission === 'granted';
+
+      if (isReallyActive) {
         // Unsubscribe
         const success = await unsubscribeFromPushNotifications();
         if (success) {
-          setIsEnabled(false);
           toast({
-            title: 'Notifikasi Dimatikan',
-            description: 'Anda tidak akan menerima notifikasi prakiraan baru',
+            title: t('toast_notif_disabled_title'),
+            description: t('toast_notif_disabled_desc'),
           });
         } else {
           toast({
-            title: 'Gagal',
-            description: 'Gagal mematikan notifikasi',
+            title: t('toast_failed_title'),
+            description: t('toast_failed_disable_desc'),
             variant: 'destructive',
           });
         }
       } else {
         // Subscribe
-        const permission = await getNotificationPermission();
-        
-        if (permission === 'denied') {
-          toast({
-            title: 'Izin Ditolak',
-            description: 'Silakan aktifkan izin notifikasi di pengaturan browser',
-            variant: 'destructive',
-          });
-          setIsLoading(false);
-          return;
-        }
-
         if (permission === 'default') {
           // Request permission first
           const newPermission = await Notification.requestPermission();
           if (newPermission !== 'granted') {
             toast({
-              title: 'Izin Ditolak',
-              description: 'Notifikasi memerlukan izin untuk berfungsi',
+              title: t('toast_perm_denied_title'),
+              description: t('toast_perm_required_desc'),
               variant: 'destructive',
             });
-            setIsLoading(false);
             return;
           }
         }
 
         const subscription = await subscribeToPushNotifications();
         if (subscription) {
-          setIsEnabled(true);
           toast({
-            title: 'Notifikasi Diaktifkan',
-            description: 'Anda akan menerima notifikasi saat prakiraan baru tersedia',
+            title: t('toast_notif_enabled_title'),
+            description: t('toast_notif_enabled_desc'),
           });
         } else {
           toast({
-            title: 'Gagal',
-            description: 'Gagal mengaktifkan notifikasi. Pastikan VAPID key sudah dikonfigurasi',
+            title: t('toast_failed_title'),
+            description: t('toast_failed_enable_desc'),
             variant: 'destructive',
           });
         }
@@ -111,12 +115,12 @@ export default function NotificationToggle() {
     } catch (error) {
       console.error('[Notification] Toggle error:', error);
       toast({
-        title: 'Error',
-        description: 'Terjadi kesalahan saat mengubah pengaturan notifikasi',
+        title: t('toast_error_title'),
+        description: t('toast_error_desc'),
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      await refreshStatus();
     }
   };
 
@@ -131,22 +135,33 @@ export default function NotificationToggle() {
       onClick={handleToggle}
       disabled={isLoading}
       className="gap-1.5 h-7 px-2 text-[10px] sm:text-xs whitespace-nowrap"
-      aria-label={isEnabled ? 'Matikan notifikasi' : 'Aktifkan notifikasi'}
+      aria-label={
+        status === 'blocked'
+          ? t('notif_aria_blocked')
+          : status === 'active'
+            ? t('notif_aria_disable')
+            : t('notif_aria_enable')
+      }
     >
       {isLoading ? (
         <>
           <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin flex-shrink-0" />
-          <span>Memproses...</span>
+          <span>{t('notif_processing')}</span>
         </>
-      ) : isEnabled ? (
+      ) : status === 'active' ? (
         <>
           <Bell className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-          <span>Notifikasi Aktif</span>
+          <span>{t('notif_active')}</span>
+        </>
+      ) : status === 'blocked' ? (
+        <>
+          <BellOff className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          <span>{t('notif_blocked')}</span>
         </>
       ) : (
         <>
           <BellOff className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-          <span>Aktifkan Notifikasi</span>
+          <span>{t('notif_enable')}</span>
         </>
       )}
     </Button>

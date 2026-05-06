@@ -1,13 +1,15 @@
 import { useMemo, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { format, isSameDay } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { enUS, id } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { toWitaDate } from '@/lib/timezone';
 import NotificationToggle from '@/components/notifications/NotificationToggle';
+import LanguageSelector from '@/components/controls/LanguageSelector';
+import { useI18n } from '@/lib/i18n';
 
 interface TimeSliderProps {
   selectedTime: string;
@@ -19,6 +21,9 @@ interface TimeSliderProps {
 }
 
 export default function TimeSlider({ selectedTime, times, producedAt, isPlaying, onPlayChange, onTimeChange }: TimeSliderProps) {
+  const { t, lang } = useI18n();
+  const dfLocale = lang === 'en' ? enUS : id;
+  const reduceMotion = useReducedMotion();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const hasData = times.length > 0;
 
@@ -106,21 +111,18 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
   }, [isPlaying, handleNext, hasData, onPlayChange]);
 
   return (
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
+    <div
       className="fixed bottom-4 left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
     >
       <div className="glass-panel rounded-xl px-3 sm:px-4 py-2 sm:py-3 pointer-events-auto max-w-full">
         {/* Top Row - Date and Time Display */}
         <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
           <span className="text-[10px] sm:text-xs font-medium text-foreground">
-            {hasData ? format(selectedDate, 'EEE, dd MMM', { locale: id }) : '-'}
+            {hasData ? format(selectedDate, 'EEE, dd MMM', { locale: dfLocale }) : '-'}
           </span>
           <span className="text-[10px] sm:text-xs text-muted-foreground">|</span>
           <span className="text-[10px] sm:text-xs font-medium text-primary font-mono">
-            {hasData ? `${format(selectedDate, 'HH:mm')} WITA` : '-'}
+            {hasData ? `${format(selectedDate, 'HH:mm')} ${t('wita')}` : '-'}
           </span>
         </div>
 
@@ -132,7 +134,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={handlePrev}
             disabled={!hasData || currentIndex === 0}
-            aria-label="Waktu sebelumnya"
+            aria-label={t('time_prev_aria')}
           >
             <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
@@ -143,7 +145,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={togglePlay}
             disabled={!hasData}
-            aria-label={isPlaying ? "Stop" : "Play"}
+            aria-label={isPlaying ? t('stop_aria') : t('play_aria')}
           >
             {isPlaying ? (
               <Pause className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -168,7 +170,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
             className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0"
             onClick={handleNext}
             disabled={!hasData || (currentIndex === times.length - 1 && !isPlaying)}
-            aria-label="Waktu berikutnya"
+            aria-label={t('time_next_aria')}
           >
             <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
@@ -192,7 +194,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
                       : "text-muted-foreground hover:bg-secondary"
                   )}
                 >
-                  {isToday ? 'Hari Ini' : format(day.date, 'dd/MM', { locale: id })}
+                  {isToday ? t('today') : format(day.date, 'dd/MM', { locale: dfLocale })}
                 </button>
               );
             })
@@ -204,16 +206,17 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
         </div>
 
         {/* Notification Toggle - Above produced time */}
-        <div className="mt-2 flex justify-center items-center">
+        <div className="mt-2 flex justify-center items-center gap-2">
           <NotificationToggle />
+          <LanguageSelector />
         </div>
         
         {/* Produced time label */}
         <div className="mt-1 text-center text-[10px] sm:text-xs text-muted-foreground">
-          Waktu Produksi: {producedAt ? `${format(toWitaDate(producedAt), 'dd MMM yyyy HH:mm', { locale: id })} WITA` : '-'}
+          {t('time_produced')}: {producedAt ? `${format(toWitaDate(producedAt), 'dd MMM yyyy HH:mm', { locale: dfLocale })} ${t('wita')}` : '-'}
         </div>
         
       </div>
-    </motion.div>
+    </div>
   );
 }

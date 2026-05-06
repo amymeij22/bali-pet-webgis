@@ -176,11 +176,12 @@
 
   /* Popup styling */
   .weather-popup {
-    @apply glass-panel rounded-2xl overflow-hidden min-w-[320px] max-w-[380px];
+    @apply glass-panel rounded-2xl overflow-hidden min-w-[320px];
   }
 
   .popup-header {
-    @apply p-4 border-b border-border/50;
+    /* Header styling is handled inside component for better readability with hero image */
+    @apply border-b border-border/50;
   }
 
   .popup-pet-display {

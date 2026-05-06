@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { PET_COLORS, PET_RANGES, PETStandard } from '@/data/dummyData';
+import { PET_COLORS, classifyPet } from '@/data/dummyData';
+import type { PETStandard } from '@/data/dummyData';
 
 interface LeafletMapProps {
   selectedTime: string;
@@ -21,6 +22,13 @@ interface LeafletMapProps {
 const BALI_CENTER: [number, number] = [-8.4095, 115.1889];
 const BALI_ZOOM = 10;
 const GEOJSON_PATH = `${import.meta.env.BASE_URL}data/destinasi_wisata_bali.geojson`;
+// Batasi panning/scroll ke area Bali + sedikit tolerance.
+// Tujuan: mencegah user menggeser peta terlalu jauh dan mengurangi tile fetch/render yang tidak perlu.
+// Kira-kira mencakup Bali + Lombok Barat sedikit (timur) dan Jawa Timur ujung (barat).
+const BALI_BOUNDS: L.LatLngBoundsExpression = [
+  [-9.30, 114.30], // south-west (tolerance kecil)
+  [-7.30, 115.70], // north-east (tolerance kecil)
+];
 // Strip any non-digit separators so both "51.03.05.1004" and "5103051004" match
 const normalizeKdepum = (value?: string | null) => value?.replace(/\D/g, '').trim() || null;
 
@@ -149,17 +157,8 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       };
     }
 
-    // Compute category based on PET standard
-    const ranges = PET_RANGES[petStandard];
-    let category: string = 'neutral';
-    const pet = forecast.pet_value;
-    for (const [key, range] of Object.entries(ranges)) {
-      if (pet >= range.min && pet < range.max) {
-        category = key;
-        break;
-      }
-    }
-    const fillColor = PET_COLORS[category as keyof typeof PET_COLORS];
+    const category = classifyPet(forecast.pet_value, petStandard);
+    const fillColor = PET_COLORS[category];
 
     return {
       fillColor,
@@ -179,6 +178,11 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       zoom: BALI_ZOOM,
       zoomControl: false,
       attributionControl: true,
+      preferCanvas: true,
+      minZoom: 5,
+      maxZoom: 18,
+      maxBounds: BALI_BOUNDS,
+      maxBoundsViscosity: 0.9,
     });
 
     // Add OSM tile layer
@@ -288,7 +292,13 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     });
     
     if (destinationBounds.isValid()) {
-      map.current.fitBounds(destinationBounds, { padding: [50, 50] });
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      // Mobile: jangan terlalu zoom-out saat pertama load
+      map.current.fitBounds(destinationBounds, {
+        padding: isMobile ? [10, 10] : [50, 50],
+        // Batasi zoom-out dari fitBounds agar peta tidak terlihat "kecil" di layar mobile.
+        maxZoom: isMobile ? 15 : undefined,
+      });
     }
   }, [geoJsonData, getStyle, getVillageId, onVillageClick, isDestination, getVillageInfo, villagesByKdepum, forecastData]);
 

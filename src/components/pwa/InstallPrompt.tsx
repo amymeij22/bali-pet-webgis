@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/lib/i18n';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -9,6 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export default function InstallPrompt() {
+  const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -195,10 +198,10 @@ export default function InstallPrompt() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial={reduceMotion ? false : { y: 100, opacity: 0 }}
+        animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
         className="fixed bottom-4 left-4 right-4 z-[35] md:left-auto md:right-4 md:w-96 pointer-events-auto"
       >
         <div className="glass-panel rounded-xl p-4 shadow-lg border border-border">
@@ -209,14 +212,14 @@ export default function InstallPrompt() {
             
             <div className="flex-1 min-w-0">
               <h3 className="text-sm font-semibold text-foreground mb-1">
-                Install Aplikasi
+                {t('pwa_install_title')}
               </h3>
               <p className="text-xs text-muted-foreground mb-3">
-                {deferredPrompt 
-                  ? 'Install aplikasi untuk akses lebih cepat dan pengalaman offline'
+                {deferredPrompt
+                  ? t('pwa_install_desc_default')
                   : isIOS
-                  ? 'Tambahkan ke Home Screen untuk akses lebih cepat'
-                  : 'Install aplikasi via menu browser untuk akses lebih cepat'}
+                    ? t('pwa_install_desc_ios')
+                    : t('pwa_install_desc_other')}
               </p>
               
               <div className="flex gap-2">
@@ -225,14 +228,14 @@ export default function InstallPrompt() {
                   onClick={handleInstall}
                   className="flex-1"
                 >
-                  {deferredPrompt ? 'Install' : isIOS ? 'Cara Install' : 'Cara Install'}
+                  {deferredPrompt ? t('pwa_install_action_install') : t('pwa_install_action_how')}
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={handleDismiss}
                   className="px-2"
-                  aria-label="Tutup"
+                  aria-label={t('close')}
                 >
                   <X className="w-4 h-4" />
                 </Button>

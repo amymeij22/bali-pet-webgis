@@ -41,6 +41,24 @@
   ON CONFLICT (category_key) DO NOTHING;
 
   -- =====================================================
+  -- Table: regencies (Kabupaten)
+  -- =====================================================
+  CREATE TABLE IF NOT EXISTS public.regencies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(50) NOT NULL UNIQUE
+  );
+
+  -- =====================================================
+  -- Table: districts (Kecamatan)
+  -- =====================================================
+  CREATE TABLE IF NOT EXISTS public.districts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    regency_id UUID NOT NULL REFERENCES public.regencies(id) ON DELETE RESTRICT,
+    name VARCHAR(50) NOT NULL,
+    CONSTRAINT uniq_district_per_regency UNIQUE (regency_id, name)
+  );
+
+  -- =====================================================
   -- Table: villages (Master Data Desa/Kelurahan dengan KDEPUM)
   -- =====================================================
   CREATE TABLE IF NOT EXISTS public.villages (
@@ -48,6 +66,8 @@
     village_name VARCHAR(100) NOT NULL UNIQUE,
     -- Kode KDEPUM (dengan titik) untuk sinkronisasi ke file GeoJSON statis
     kdepum_code VARCHAR(20) NOT NULL UNIQUE,
+    regency_id UUID REFERENCES public.regencies(id) ON DELETE RESTRICT,
+    district_id UUID REFERENCES public.districts(id) ON DELETE RESTRICT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
@@ -73,6 +93,12 @@
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     village_id UUID NOT NULL REFERENCES public.villages(id) ON DELETE CASCADE,
     destination_name VARCHAR(120) NOT NULL,
+    -- Optional: URL gambar destinasi (dipakai WebGIS untuk hero image popup)
+    image_url TEXT,
+    -- Koordinat/elevasi per destinasi (untuk biometeo/PET; bisa berbeda dalam desa yang sama)
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    sea_level_height DOUBLE PRECISION,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- Satu destinasi bisa unik per village (optional constraint)
@@ -139,7 +165,8 @@
   -- =====================================================
   CREATE TABLE IF NOT EXISTS public.weather_forecasts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    village_id UUID NOT NULL REFERENCES public.villages(id) ON DELETE CASCADE,
+    -- Forecast per destinasi (karena lat/lon/elev per destinasi mempengaruhi biometeo/PET)
+    destination_id UUID NOT NULL REFERENCES public.destinations(id) ON DELETE CASCADE,
     batch_id UUID NOT NULL REFERENCES public.forecast_batches(id) ON DELETE CASCADE,
     forecast_time TIMESTAMPTZ NOT NULL,
 
@@ -151,6 +178,12 @@
     visibility VARCHAR(50) NOT NULL,
 
     pet_value NUMERIC(5,2) NOT NULL,
+
+    -- Kolom biometeo tambahan (opsional, tapi dipakai pipeline produksi)
+    cloud_cover NUMERIC(5,2),
+    tmrt NUMERIC(7,2),
+    vapor_pressure NUMERIC(7,3),
+    wind_speed_1_1m NUMERIC(7,3),
     
     -- Dual thermal category references (FK to thermal_categories)
     temperate_thermal_category UUID REFERENCES public.thermal_categories(id) ON DELETE SET NULL,
@@ -159,15 +192,15 @@
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     CONSTRAINT humidity_range CHECK (humidity >= 0 AND humidity <= 100),
-    CONSTRAINT uniq_village_batch_time UNIQUE (village_id, batch_id, forecast_time)
+    CONSTRAINT uniq_destination_batch_time UNIQUE (destination_id, batch_id, forecast_time)
   );
 
   -- Indexes to speed queries
   CREATE INDEX IF NOT EXISTS idx_forecasts_batch_time
   ON public.weather_forecasts (batch_id, forecast_time);
 
-  CREATE INDEX IF NOT EXISTS idx_forecasts_village_batch
-  ON public.weather_forecasts (village_id, batch_id);
+  CREATE INDEX IF NOT EXISTS idx_forecasts_destination_batch
+  ON public.weather_forecasts (destination_id, batch_id);
 
 
   -- =====================================================
@@ -184,17 +217,25 @@
     v.id AS village_id,
     v.village_name,
     v.kdepum_code,
+    r.name AS regency,
+    di.name AS district,
     COALESCE(
       json_agg(
         json_build_object(
           'id', d.id,
-          'destination_name', d.destination_name
+          'destination_name', d.destination_name,
+          'image_url', d.image_url,
+          'latitude', d.latitude,
+          'longitude', d.longitude,
+          'sea_level_height', d.sea_level_height
         ) ORDER BY d.destination_name
       ) FILTER (WHERE d.id IS NOT NULL),
       '[]'::json
     ) AS destinations
   FROM public.villages v
+  LEFT JOIN public.regencies r ON r.id = v.regency_id
+  LEFT JOIN public.districts di ON di.id = v.district_id
   LEFT JOIN public.destinations d ON v.id = d.village_id
-  GROUP BY v.id, v.village_name, v.kdepum_code;
+  GROUP BY v.id, v.village_name, v.kdepum_code, r.name, di.name;
 
   -- End of schema
