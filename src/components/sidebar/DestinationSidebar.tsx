@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ListFilter, MapPin, Search, Thermometer } from 'lucide-react';
-import { PET_COLORS, classifyPet } from '@/data/dummyData';
-import type { PETStandard } from '@/data/dummyData';
+import { PET_COLORS, classifyPet } from '@/lib/pet';
+import type { PETStandard } from '@/lib/pet';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useI18n } from '@/lib/i18n';

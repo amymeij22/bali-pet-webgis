@@ -48,8 +48,6 @@ export default function NotificationToggle() {
   };
 
   const handleToggle = async () => {
-    if (isLoading) return;
-
     setIsLoading(true);
 
     try {

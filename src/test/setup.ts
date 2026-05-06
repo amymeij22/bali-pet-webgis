@@ -20,3 +20,9 @@ if (!('scrollIntoView' in HTMLElement.prototype)) {
   (HTMLElement.prototype as any).scrollIntoView = () => {};
 }
 
+// Default Notification mock for components that may call requestPermission.
+if (!('Notification' in globalThis)) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).Notification = { requestPermission: async () => 'default' };
+}
+

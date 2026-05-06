@@ -25,17 +25,42 @@ export default defineConfig(({ mode }) => ({
     mockReset: true,
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "lcov"],
+      reporter: ["text", "text-summary", "html", "lcov", "json-summary"],
       reportsDirectory: "./coverage",
+      all: true,
+      // Fokus coverage ke "production-critical modules":
+      // - pure logic + integration boundaries (lib/, data/)
+      // - notification toggle (stateful prod behavior)
+      // - popup (core UX yang memetakan data forecast -> UI)
+      include: [
+        "src/lib/**/*.{ts,tsx}",
+        // data layer wrappers are better covered by integration tests against Supabase;
+        // keep unit coverage focused on deterministic logic.
+        "src/components/notifications/**/*.{ts,tsx}",
+        "src/components/popup/WeatherPopup.tsx",
+        "src/components/controls/LanguageSelector.tsx",
+      ],
       exclude: [
         "dist/**",
         "public/**",
         "supabase/**",
         "db/**",
         "src/components/ui/**",
-        "src/components/popup/WeatherPopup.tsx",
+        "src/test/**",
+        "**/*.test.*",
+        "**/*.spec.*",
         "**/*.d.ts",
+        // konfigurasi/IO boundary yang biasanya dites via e2e/integration
+        "src/lib/supabaseClient.ts",
+        "src/lib/pushNotification.ts",
+        "src/data/supabaseQueries.ts",
       ],
+      thresholds: {
+        statements: 90,
+        branches: 85,
+        functions: 90,
+        lines: 90,
+      },
     },
   },
 }));

@@ -7,7 +7,7 @@ import TimeSlider from '@/components/controls/TimeSlider';
 import WeatherPopup from '@/components/popup/WeatherPopup';
 import MapHeader from '@/components/header/MapHeader';
 import DataSourceCard from '@/components/controls/DataSourceCard';
-import type { PETStandard } from '@/data/dummyData';
+import type { PETStandard } from '@/lib/pet';
 import { 
   getLatestBatch, 
   getDestinationsWithVillage, 

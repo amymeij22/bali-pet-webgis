@@ -13,8 +13,8 @@ import {
   Cloud,
   Eye,
 } from 'lucide-react';
-import { PET_COLORS, PET_RANGES, PETStandard, classifyPet } from '@/data/dummyData';
-import type { ThermalCategory } from '@/data/dummyData';
+import { PET_COLORS, PET_RANGES, classifyPet } from '@/lib/pet';
+import type { PETStandard, ThermalCategory } from '@/lib/pet';
 import type { WeatherForecast } from '@/data/supabaseQueries';
 import { Button } from '@/components/ui/button';
 import { toWitaDate } from '@/lib/timezone';
@@ -93,13 +93,11 @@ export default function WeatherPopup({
   const canGoNext = currentIndex >= 0 && currentIndex < times.length - 1;
 
   const handlePrev = () => {
-    const prev = currentIndex > 0 ? times[currentIndex - 1] : null;
-    if (prev) onTimeChange(prev);
+    onTimeChange(times[currentIndex - 1]!);
   };
 
   const handleNext = () => {
-    const next = currentIndex >= 0 && currentIndex < times.length - 1 ? times[currentIndex + 1] : null;
-    if (next) onTimeChange(next);
+    onTimeChange(times[currentIndex + 1]!);
   };
 
   // Get current date/time from selected time or use current date

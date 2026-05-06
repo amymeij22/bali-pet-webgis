@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { PET_COLORS, classifyPet } from '@/data/dummyData';
-import type { PETStandard } from '@/data/dummyData';
+import { PET_COLORS, classifyPet } from '@/lib/pet';
+import type { PETStandard } from '@/lib/pet';
 
 interface LeafletMapProps {
   selectedTime: string;

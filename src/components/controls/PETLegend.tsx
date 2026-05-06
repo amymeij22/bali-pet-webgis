@@ -4,9 +4,8 @@ import { X, Info } from 'lucide-react';
 import {
   PET_COLORS,
   PET_RANGES,
-  PETStandard,
-  ThermalCategory,
-} from '@/data/dummyData';
+} from '@/lib/pet';
+import type { PETStandard, ThermalCategory } from '@/lib/pet';
 import { useI18n } from '@/lib/i18n';
 import {
   Select,
