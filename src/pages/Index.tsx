@@ -446,6 +446,7 @@ const Index = () => {
                 destinations={activeVillage.destinations}
                 selectedDestinationId={activeVillage.selectedDestinationId}
                 onDestinationChange={handleDestinationChangeInPopup}
+                forecastList={activeVillage.selectedDestinationId ? forecastListsByDestination.get(activeVillage.selectedDestinationId) : undefined}
               />
             </div>
           </motion.div>

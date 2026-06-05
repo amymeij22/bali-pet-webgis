@@ -13,6 +13,15 @@ import {
   Cloud,
   Eye,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  CartesianGrid,
+} from 'recharts';
 import { PET_COLORS, PET_RANGES, classifyPet } from '@/lib/pet';
 import type { PETStandard, ThermalCategory } from '@/lib/pet';
 import type { WeatherForecast } from '@/data/supabaseQueries';
@@ -36,6 +45,7 @@ interface WeatherPopupProps {
   destinations?: Array<{ id: string; name: string; imageUrl?: string | null }>;
   selectedDestinationId?: string;
   onDestinationChange?: (destinationId: string) => void;
+  forecastList?: WeatherForecast[];
 }
 
 export default function WeatherPopup({
@@ -54,12 +64,57 @@ export default function WeatherPopup({
   destinations,
   selectedDestinationId,
   onDestinationChange,
+  forecastList,
 }: WeatherPopupProps) {
   const { t, lang } = useI18n();
   const dfLocale = lang === 'en' ? enUS : id;
   const reduceMotion = useReducedMotion();
   // Indexing is handled by parent now; we only navigate using provided time
   const ranges = PET_RANGES[standard];
+
+  const [activeTab, setActiveTab] = useState<'current' | 'trend'>('current');
+
+  const chartData = useMemo(() => {
+    if (!forecastList || forecastList.length === 0) return [];
+    const sorted = [...forecastList].sort(
+      (a, b) => new Date(a.forecast_time).getTime() - new Date(b.forecast_time).getTime()
+    );
+    return sorted.map((f) => {
+      const witaDate = toWitaDate(f.forecast_time);
+      return {
+        timeStr: format(witaDate, 'HH:mm'),
+        dateStr: format(witaDate, 'dd/MM'),
+        fullTimeLabel: `${format(witaDate, 'dd/MM HH:mm')} WITA`,
+        pet: f.pet_value,
+        forecast: f,
+      };
+    });
+  }, [forecastList]);
+
+  const CustomChartTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const category = classifyPet(data.pet, standard);
+      const range = PET_RANGES[standard][category];
+      const categoryLabel = lang === 'en' ? range.label : range.labelId;
+      const color = PET_COLORS[category];
+
+      return (
+        <div className="bg-card text-card-foreground p-3 rounded-lg shadow-lg border border-border text-xs min-w-[140px]">
+          <p className="font-semibold text-muted-foreground mb-1">{data.fullTimeLabel}</p>
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <span>PET:</span>
+            <span className="font-bold font-mono text-sm" style={{ color }}>{data.pet.toFixed(1)}°C</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <span>Status:</span>
+            <span className="font-semibold" style={{ color }}>{categoryLabel}</span>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Fallback hero image (WEBP) kalau dari DB kosong / gagal load.
   const HERO_FALLBACK_URL =
@@ -290,40 +345,115 @@ export default function WeatherPopup({
         )}
       </div>
 
-      {/* Weather Parameters */}
-      <div className="popup-weather-grid flex-1 overflow-auto">
-        <WeatherItem
-          icon={<Thermometer className="w-5 h-5" />}
-          label={t('popup_weather_temp')}
-          value={forecast ? `${forecast.temperature}°C` : t('not_available')}
-        />
-        <WeatherItem
-          icon={<Droplets className="w-5 h-5" />}
-          label={t('popup_weather_humidity')}
-          value={forecast ? `${forecast.humidity}%` : t('not_available')}
-        />
-        <WeatherItem
-          icon={<Wind className="w-5 h-5" />}
-          label={t('popup_weather_wind_speed')}
-          value={forecast ? `${forecast.wind_speed} ${lang === 'en' ? 'km/h' : 'km/jam'}` : t('not_available')}
-        />
-        <WeatherItem
-          icon={<Compass className="w-5 h-5" />}
-          label={t('popup_weather_wind_dir')}
-          value={forecast ? (windDirDisplay ?? t('not_available')) : t('not_available')}
-        />
-        <WeatherItem
-          icon={<Cloud className="w-5 h-5" />}
-          label={t('popup_weather_condition')}
-          value={forecast ? forecast.weather_condition : t('not_available')}
-        />
-        <WeatherItem
-          icon={<Eye className="w-5 h-5" />}
-          label={t('popup_weather_visibility')}
-          value={forecast ? (visibilityDisplay ?? t('not_available')) : t('not_available')}
-        />
-        {/* Optional: precipitation and cloud cover are not in the new schema */}
+      {/* Tab Selector */}
+      <div className="flex border-b border-border/80 bg-muted/20 flex-shrink-0">
+        <button
+          type="button"
+          onClick={() => setActiveTab('current')}
+          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all duration-200 ${
+            activeTab === 'current'
+              ? "border-primary text-primary bg-background/40"
+              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/10"
+          }`}
+        >
+          {t('popup_tab_current')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('trend')}
+          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all duration-200 ${
+            activeTab === 'trend'
+              ? "border-primary text-primary bg-background/40"
+              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/10"
+          }`}
+        >
+          {t('popup_tab_trend')}
+        </button>
       </div>
+
+      {activeTab === 'current' ? (
+        /* Weather Parameters */
+        <div className="popup-weather-grid flex-1 overflow-auto">
+          <WeatherItem
+            icon={<Thermometer className="w-5 h-5" />}
+            label={t('popup_weather_temp')}
+            value={forecast ? `${forecast.temperature}°C` : t('not_available')}
+          />
+          <WeatherItem
+            icon={<Droplets className="w-5 h-5" />}
+            label={t('popup_weather_humidity')}
+            value={forecast ? `${forecast.humidity}%` : t('not_available')}
+          />
+          <WeatherItem
+            icon={<Wind className="w-5 h-5" />}
+            label={t('popup_weather_wind_speed')}
+            value={forecast ? `${forecast.wind_speed} ${lang === 'en' ? 'km/h' : 'km/jam'}` : t('not_available')}
+          />
+          <WeatherItem
+            icon={<Compass className="w-5 h-5" />}
+            label={t('popup_weather_wind_dir')}
+            value={forecast ? (windDirDisplay ?? t('not_available')) : t('not_available')}
+          />
+          <WeatherItem
+            icon={<Cloud className="w-5 h-5" />}
+            label={t('popup_weather_condition')}
+            value={forecast ? forecast.weather_condition : t('not_available')}
+          />
+          <WeatherItem
+            icon={<Eye className="w-5 h-5" />}
+            label={t('popup_weather_visibility')}
+            value={forecast ? (visibilityDisplay ?? t('not_available')) : t('not_available')}
+          />
+        </div>
+      ) : (
+        /* Trend Chart */
+        <div className="flex-1 p-4 flex flex-col justify-center overflow-hidden bg-background/30">
+          {chartData.length > 0 ? (
+            <div className="w-full h-full min-h-[180px] flex-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={chartData}
+                  margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorPet" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={petColor} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={petColor} stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.4)" />
+                  <XAxis 
+                    dataKey="timeStr" 
+                    tickLine={false} 
+                    axisLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  />
+                  <YAxis 
+                    domain={['auto', 'auto']}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  />
+                  <RechartsTooltip content={<CustomChartTooltip />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="pet" 
+                    stroke={petColor} 
+                    strokeWidth={2}
+                    fillOpacity={1} 
+                    fill="url(#colorPet)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center text-muted-foreground py-8">
+              <Cloud className="w-8 h-8 opacity-40 mb-2" />
+              <p className="text-xs">{t('popup_no_forecast_desc')}</p>
+            </div>
+          )}
+        </div>
+      )}
     </motion.div>
   );
 }
