@@ -116,6 +116,40 @@ export default function WeatherPopup({
     return null;
   };
 
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (!cx || !cy) return null;
+    const category = classifyPet(payload.pet, standard);
+    const color = PET_COLORS[category];
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={3.5}
+        fill={color}
+        stroke="#ffffff"
+        strokeWidth={1.5}
+      />
+    );
+  };
+
+  const CustomActiveDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    if (!cx || !cy) return null;
+    const category = classifyPet(payload.pet, standard);
+    const color = PET_COLORS[category];
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={5.5}
+        fill={color}
+        stroke="#ffffff"
+        strokeWidth={2}
+      />
+    );
+  };
+
   // Fallback hero image (WEBP) kalau dari DB kosong / gagal load.
   const HERO_FALLBACK_URL =
     'https://images.unsplash.com/photo-1555861496-0666c8981751?auto=format&fit=crop&w=1200&q=80&fm=webp';
@@ -416,9 +450,19 @@ export default function WeatherPopup({
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                 >
                   <defs>
-                    <linearGradient id="colorPet" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={petColor} stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor={petColor} stopOpacity={0.1}/>
+                    <linearGradient id="strokeGradient" x1="0" y1="0" x2="1" y2="0">
+                      {chartData.map((d, idx) => {
+                        const pct = chartData.length > 1 ? `${(idx / (chartData.length - 1)) * 100}%` : '0%';
+                        const cat = classifyPet(d.pet, standard);
+                        return <stop key={idx} offset={pct} stopColor={PET_COLORS[cat]} />;
+                      })}
+                    </linearGradient>
+                    <linearGradient id="fillGradient" x1="0" y1="0" x2="1" y2="0">
+                      {chartData.map((d, idx) => {
+                        const pct = chartData.length > 1 ? `${(idx / (chartData.length - 1)) * 100}%` : '0%';
+                        const cat = classifyPet(d.pet, standard);
+                        return <stop key={idx} offset={pct} stopColor={PET_COLORS[cat]} stopOpacity={0.2} />;
+                      })}
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.4)" />
@@ -438,10 +482,12 @@ export default function WeatherPopup({
                   <Area 
                     type="monotone" 
                     dataKey="pet" 
-                    stroke={petColor} 
-                    strokeWidth={2}
+                    stroke="url(#strokeGradient)" 
+                    strokeWidth={2.5}
                     fillOpacity={1} 
-                    fill="url(#colorPet)" 
+                    fill="url(#fillGradient)" 
+                    dot={<CustomDot />}
+                    activeDot={<CustomActiveDot />}
                   />
                 </AreaChart>
               </ResponsiveContainer>
