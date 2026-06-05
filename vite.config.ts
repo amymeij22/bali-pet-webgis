@@ -23,6 +23,14 @@ export default defineConfig(({ mode }) => ({
     restoreMocks: true,
     clearMocks: true,
     mockReset: true,
+    exclude: [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/cypress/**",
+      "**/.{idea,git,cache,output,temp}/**",
+      "**/{karma,rollup,webpack,vite,vitest}.config.*",
+      "e2e/**"
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "html", "lcov", "json-summary"],
