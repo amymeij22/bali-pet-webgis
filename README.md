@@ -1,108 +1,118 @@
-# WebGIS Prediksi Kenyamanan Termal (PET) — Bali (WITA/UTC+8)
+# Bali PET WebGIS
 
-Aplikasi WebGIS (SPA) untuk menampilkan **prediksi kenyamanan termal** berbasis indeks **Physiological Equivalent Temperature (PET)** pada **destinasi wisata di Bali**, lengkap dengan peta choropleth, slider waktu, popup detail cuaca, dan dukungan PWA + push notification.
+Aplikasi WebGIS interaktif untuk memvisualisasikan prediksi **kenyamanan termal** di berbagai destinasi wisata Bali. Kenyamanan termal dihitung berdasarkan indeks **Physiological Equivalent Temperature (PET)** menggunakan data cuaca historis dan prakiraan.
 
-## Ringkasan cepat
-- **Platform**: React 18 + TypeScript + Vite
-- **Map**: Leaflet + OSM tiles + GeoJSON poligon (`public/data/destinasi_wisata_bali.geojson`)
-- **Data**: Supabase Postgres (forecast per **destinasi**, bukan per desa)
-- **Waktu**: Semua tampilan waktu dikonversi ke **WITA (UTC+8)**.
-- **PWA**: `manifest.json` + service worker (`public/sw.js`)
-- **Notifikasi**: Web Push API + Supabase Edge Function `send-push-notification`
+[![React](https://img.shields.io/badge/React-18.3-blue?logo=react)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://typescriptlang.org)
+[![Vitest](https://img.shields.io/badge/Tests-58%20Passed-green?logo=vitest)](https://vitest.dev)
+[![Playwright](https://img.shields.io/badge/E2E-4%20Passed-green?logo=playwright)](https://playwright.dev)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](#)
 
-## Fitur utama
-- **Peta choropleth**: warna poligon mengikuti kategori PET pada waktu terpilih.
-- **Slider waktu (3 jam)**: langkah 3 jam dengan toleransi nearest-time (kasus offset BMKG), autoplay, label “Waktu Produksi”.
-- **Multi-destinasi per desa**:
-  - Popup menampilkan dropdown jika satu desa memiliki >1 destinasi.
-  - Warna poligon desa menggunakan **PET terpanas (maksimum)** dari destinasi dalam desa tersebut.
-- **Popup detail**: hero image destinasi, PET + kategori, suhu/kelembapan/angin/kondisi/visibilitas, navigasi waktu dalam popup.
-- **Sidebar destinasi**: search, grouping (jika metadata tersedia), dan scroll-to-active.
-- **Multi-bahasa**: Indonesia + English (teks UI), dengan selector di TimeSlider.
-- **Push notification**: subscribe/unsubscribe, status tombol mengikuti subscription nyata browser.
+---
 
-## Struktur data (kontrak penting)
-Source of truth: `db/schema.sql`.
+## Demonstrasi Visual
 
-- **`villages`**: master desa + `kdepum_code` untuk mapping ke GeoJSON.
-- **`destinations`**: master destinasi (many-to-one ke `villages`), termasuk:
-  - `latitude`, `longitude`, `sea_level_height` (per destinasi)
-  - `image_url` (opsional) untuk hero image popup
-- **`forecast_batches`**: batch produksi data (1 batch `is_latest = true`).
-- **`weather_forecasts`**: forecast per **destinasi** dan waktu (`destination_id`, `batch_id`, `forecast_time`).
-- **`push_subscriptions`**: endpoint push yang aktif.
+Berikut adalah cuplikan rekaman interaksi langsung pada dasbor WebGIS (memilih bahasa, melihat detail destinasi, dan berpindah tab ke grafik tren kenyamanan):
 
-## Hero image destinasi (`destinations.image_url`)
-Popup mengambil gambar dari **`destinations.image_url`** (URL penuh). Jika kosong/gagal load, akan fallback ke placeholder.
+![Demonstrasi Fitur WebGIS](public/demo/webgis_demo.webp)
 
-Catatan:
-- Jika kamu menyimpan **signed URL** Supabase Storage, URL bisa expired. Rekomendasi: gunakan **public bucket URL** atau simpan path objek + generate URL dengan mekanisme yang tidak cepat expired.
+| Dasbor Utama & Peta Choropleth | Tab Tren Kenyamanan (Suhu vs PET) |
+| :---: | :---: |
+| ![Pemuatan Awal](public/demo/webgis_loaded.png) | ![Grafik Tren](public/demo/tren_kenyamanan_chart.png) |
 
-## PWA & caching (production-ready)
-- **Service worker**: `public/sw.js`
-  - HTML navigations: **network-first** (update cepat), fallback cache/offline.
-  - Build assets (`/assets/*`, js/css/font/img): **cache-first** (aman karena hashed).
-  - GeoJSON: **stale-while-revalidate**.
-  - Supabase API: **network-only** (tidak dicache).
+---
 
-## Setup lokal
-Prerequisite: Node.js 18+.
+## Tentang Proyek
 
-1) Install dependencies (pilih salah satu, jangan campur):
+Proyek ini dibangun sebagai bagian dari penelitian Tugas Akhir (Skripsi) di **Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG)**. WebGIS ini dirancang untuk membantu wisatawan maupun pengelola destinasi wisata di Provinsi Bali dalam merencanakan aktivitas luar ruangan berdasarkan tingkat kenyamanan termal real-time dan prakiraan.
 
+Peta choropleth merender warna poligon desa berdasarkan kategori kenyamanan PET terpanas (maksimum) dari seluruh destinasi wisata di dalam wilayah administrasi tersebut.
+
+---
+
+## Fitur Utama
+
+- **Peta Interaktif (Leaflet)**: Peta choropleth Bali yang diwarnai dinamis sesuai tingkat kenyamanan termal saat ini.
+- **Tab Panel Informasi**: Memisahkan detail cuaca terkini (suhu, kelembapan, kecepatan angin, arah angin, kondisi visual, jarak pandang) dengan grafik tren kenyamanan.
+- **Grafik Tren Kenyamanan & Suhu (Recharts)**:
+  - Visualisasi PET menggunakan diagram area dengan gradien warna dinamis (merah untuk sangat panas, hijau untuk nyaman, dst.) per titik waktu.
+  - Ditambah garis putus-putus (*dashed line*) visualisasi tren Suhu Udara (°C).
+  - **Sinkronisasi Waktu Interaktif**: Klik pada titik mana pun di grafik tren untuk menyelaraskan jam aktif dasbor dan peta.
+- **Toleransi Waktu (Fuzzy Matching)**: Penanganan data BMKG otomatis dengan pencarian jam terdekat berbasis batas toleransi ±90 menit (`NEAREST_TOLERANCE_MS`).
+- **Sidebar Destinasi**: Dilengkapi pencarian nama, pintasan sorot ke peta, serta pengelompokan per wilayah kabupaten/kecamatan.
+- **PWA & Offline Caching**: Dukungan instalasi aplikasi langsung dari browser, manifest, dan service worker siap pakai (*production-ready*).
+- **Push Notification**: Berlangganan notifikasi otomatis saat batch data prakiraan cuaca baru selesai diproduksi oleh backend.
+
+---
+
+## Prasyarat (Prerequisites)
+
+Sebelum mulai menjalankan aplikasi secara lokal, pastikan perangkat Anda sudah terinstal:
+- **Node.js** (versi 18 ke atas)
+- Browser modern dengan dukungan Geolocation dan Web Push (seperti Chrome, Edge, atau Firefox)
+
+---
+
+## Panduan Instalasi & Penggunaan
+
+1. **Unduh repositori dan masuk ke folder proyek**:
+   ```bash
+   cd webgis
+   ```
+
+2. **Instal dependensi package**:
+   ```bash
+   npm install
+   ```
+
+3. **Konfigurasi Environment**:
+   Buat file baru bernama `.env.local` di folder root `webgis/` dan isi variabel berikut:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_VAPID_PUBLIC_KEY=your_vapid_public_key
+   ```
+
+4. **Jalankan aplikasi di mode pengembangan (lokal)**:
+   ```bash
+   npm run dev
+   ```
+   Aplikasi akan berjalan secara lokal di [http://localhost:8080](http://localhost:8080).
+
+5. **Build proyek untuk mode produksi**:
+   ```bash
+   npm run build
+   npm run preview
+   ```
+
+---
+
+## Pengujian & Testing
+
+Dasbor ini dilengkapi dua jenis verifikasi otomatis:
+
+### 1. Unit Testing (Vitest)
+Digunakan untuk menguji logika bisnis deterministik (seperti konversi WITA, perhitungan fuzzy matching, pengelompokan menu, kamus bahasa, dan klasifikasi PET):
 ```bash
-npm install
+npm run test
 ```
 
-2) Siapkan env:
-- Buat `webgis/.env.local`:
-
-```env
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-VITE_VAPID_PUBLIC_KEY=...   # untuk subscribe Web Push dari browser
-```
-
-3) Jalankan dev:
-
+### 2. End-to-End (E2E) Testing (Playwright)
+Menguji alur interaksi antarmuka pengguna pada browser Chromium nyata (seperti memuat peta Leaflet, berganti bahasa, memicu pop-up dari klik sidebar, dan klik grafik tren):
 ```bash
-npm run dev
+# Instal browser biner Playwright jika pertama kali
+npx playwright install chromium
+
+# Jalankan semua pengujian E2E
+npm run test:e2e
 ```
 
-4) Build & preview:
+---
 
-```bash
-npm run build
-npm run preview
-```
+## Kontribusi & Hak Cipta
 
-## Setup Supabase (ringkas)
-1) Jalankan skema:
-- Eksekusi `db/schema.sql` di Supabase SQL Editor.
+Proyek ini bersifat **private** (tertutup). Seluruh hak cipta dilindungi oleh pembuat dan Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG). 
 
-2) (Opsional) Tambah kolom gambar jika DB lama:
-- Eksekusi `db/migration.sql` (hanya menambah `destinations.image_url`).
-
-3) Edge Function push notification:
-- Deploy `supabase/functions/send-push-notification`.
-- Set secrets:
-  - `SUPABASE_URL`
-  - `SUPABASE_SERVICE_ROLE_KEY`
-  - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
-- Buat database webhook untuk `forecast_batches` (INSERT/UPDATE) yang memanggil function.
-
-4) Realtime:
-- Enable Realtime untuk tabel `forecast_batches`.
-
-## Deployment
-- Output build: `dist/`
-- Wajib **HTTPS** (PWA & push notifications).
-- Pastikan `manifest.json` dan `sw.js` berada di root path (`/manifest.json`, `/sw.js`).
-
-## Troubleshooting cepat
-- **Peta/data tidak muncul**: cek RLS/policy untuk tabel `villages`, `destinations`, `forecast_batches`, `weather_forecasts`.
-- **Gambar masih placeholder**: pastikan `destinations.image_url` terisi dan URL bisa diakses dari client.
-- **Notifikasi “aktif” tapi tidak masuk**: cek Edge Function logs, VAPID keys, dan status subscription di `push_subscriptions`.
-
-## Lisensi
-Bagian dari Tugas Akhir (Skripsi) STMKG.
+Kontak atau pertanyaan mengenai penelitian ini dapat ditujukan langsung ke institusi:
+*   **Instansi**: Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG), Tangerang.
