@@ -98,16 +98,6 @@ const DICTS: Record<Language, Dict> = {
     toast_failed_enable_desc: 'Gagal mengaktifkan notifikasi. Pastikan VAPID key sudah dikonfigurasi',
     toast_error_title: 'Error',
     toast_error_desc: 'Terjadi kesalahan saat mengubah pengaturan notifikasi',
-    
-    // Geolocation
-    geo_locating: 'Mencari lokasi Anda...',
-    geo_not_supported: 'Geolocation tidak didukung oleh browser Anda',
-    geo_perm_denied: 'Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser.',
-    geo_position_unavailable: 'Lokasi Anda tidak dapat ditentukan.',
-    geo_timeout: 'Waktu pencarian lokasi habis.',
-    geo_error_unknown: 'Terjadi kesalahan tidak dikenal saat mencari lokasi.',
-    geo_outside_area: 'Anda berada di luar area pemantauan destinasi Bali.',
-    geo_found_destination: 'Lokasi Anda terdeteksi di sekitar {name}.',
   },
   en: {
     lang_label: 'Language',
@@ -201,16 +191,6 @@ const DICTS: Record<Language, Dict> = {
     toast_failed_enable_desc: 'Failed to enable notifications. Ensure the VAPID key is configured',
     toast_error_title: 'Error',
     toast_error_desc: 'An error occurred while changing notification settings',
-
-    // Geolocation
-    geo_locating: 'Finding your location...',
-    geo_not_supported: 'Geolocation is not supported by your browser',
-    geo_perm_denied: 'Location access denied. Please enable location permission in browser settings.',
-    geo_position_unavailable: 'Your location could not be determined.',
-    geo_timeout: 'Location request timed out.',
-    geo_error_unknown: 'An unknown error occurred while finding your location.',
-    geo_outside_area: 'Your location is outside the Bali destination areas.',
-    geo_found_destination: 'Your location detected near {name}.',
   },
 };
 
