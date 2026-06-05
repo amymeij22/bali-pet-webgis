@@ -17,6 +17,7 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  Line,
   XAxis,
   YAxis,
   Tooltip as RechartsTooltip,
@@ -86,6 +87,7 @@ export default function WeatherPopup({
         dateStr: format(witaDate, 'dd/MM'),
         fullTimeLabel: `${format(witaDate, 'dd/MM HH:mm')} WITA`,
         pet: f.pet_value,
+        temp: f.temperature,
         forecast: f,
       };
     });
@@ -100,11 +102,15 @@ export default function WeatherPopup({
       const color = PET_COLORS[category];
 
       return (
-        <div className="bg-card text-card-foreground p-3 rounded-lg shadow-lg border border-border text-xs min-w-[140px]">
+        <div className="bg-card text-card-foreground p-3 rounded-lg shadow-lg border border-border text-xs min-w-[150px]">
           <p className="font-semibold text-muted-foreground mb-1">{data.fullTimeLabel}</p>
           <div className="flex items-center justify-between gap-4 mt-1">
             <span>PET:</span>
             <span className="font-bold font-mono text-sm" style={{ color }}>{data.pet.toFixed(1)}°C</span>
+          </div>
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <span>{t('popup_weather_temp')}:</span>
+            <span className="font-bold font-mono text-sm text-sky-500">{data.temp.toFixed(1)}°C</span>
           </div>
           <div className="flex items-center justify-between gap-4 mt-1">
             <span>Status:</span>
@@ -448,6 +454,15 @@ export default function WeatherPopup({
                 <AreaChart
                   data={chartData}
                   margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                  onClick={(state) => {
+                    if (state && state.activeTooltipIndex !== undefined) {
+                      const data = chartData[state.activeTooltipIndex];
+                      if (data && data.forecast) {
+                        onTimeChange(data.forecast.forecast_time);
+                      }
+                    }
+                  }}
+                  className="cursor-pointer"
                 >
                   <defs>
                     <linearGradient id="strokeGradient" x1="0" y1="0" x2="1" y2="0">
@@ -488,6 +503,15 @@ export default function WeatherPopup({
                     fill="url(#fillGradient)" 
                     dot={<CustomDot />}
                     activeDot={<CustomActiveDot />}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="temp"
+                    stroke="hsl(var(--primary) / 0.5)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    dot={false}
+                    activeDot={{ r: 4, strokeWidth: 1 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
