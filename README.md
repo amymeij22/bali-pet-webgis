@@ -11,6 +11,19 @@ Aplikasi WebGIS interaktif untuk memvisualisasikan prediksi **kenyamanan termal*
 
 ---
 
+## Daftar Isi
+- [Demonstrasi Visual](#demonstrasi-visual)
+- [Tentang Proyek](#tentang-proyek)
+- [Arsitektur & Struktur Direktori](#arsitektur--struktur-direktori)
+- [Fitur Utama](#fitur-utama)
+- [Dependensi Utama](#dependensi-utama)
+- [Prasyarat (Prerequisites)](#prasyarat-prerequisites)
+- [Panduan Instalasi & Penggunaan](#panduan-instalasi--penggunaan)
+- [Pengujian & Testing](#pengujian--testing)
+- [Kontribusi & Hak Cipta](#kontribusi--hak-cipta)
+
+---
+
 ## Demonstrasi Visual
 
 Berikut adalah cuplikan rekaman interaksi langsung pada dasbor WebGIS (memilih bahasa, melihat detail destinasi, dan berpindah tab ke grafik tren kenyamanan):
@@ -31,6 +44,36 @@ Peta choropleth merender warna poligon desa berdasarkan kategori kenyamanan PET 
 
 ---
 
+## Arsitektur & Struktur Direktori
+
+Repositori ini disusun menggunakan pola standar proyek React + Vite dengan struktur direktori yang modular sebagai berikut:
+
+```text
+webgis/
+├── e2e/                # Skenario pengujian End-to-End (Playwright)
+├── public/             # Aset statis publik (ikon, gambar demo)
+├── src/                # Kode sumber utama aplikasi
+│   ├── assets/         # Aset gambar, ikon, dan gaya tambahan
+│   ├── components/     # Komponen UI yang reusable
+│   │   ├── ui/         # Komponen dasar visual (Button, Dialog, dll via shadcn)
+│   │   ├── map/        # Komponen rendering peta Leaflet
+│   │   ├── chart/      # Visualisasi tren kenyamanan dengan Recharts
+│   │   ├── sidebar/    # Panel navigasi dan daftar destinasi wisata
+│   │   ├── popup/      # Detail parameter cuaca & popup destinasi
+│   │   └── notifications/ # Tombol pendaftaran push notification
+│   ├── data/           # Kueri database & master data lokal
+│   ├── hooks/          # Custom React hooks (geolokasi, state queries)
+│   ├── lib/            # Utilitas global, translator i18n, & client Supabase
+│   ├── pages/          # Halaman dasbor utama (Index.tsx)
+│   ├── test/           # Setup pengujian Vitest & mocks
+│   ├── App.tsx         # Entrypoint komponen aplikasi
+│   └── main.tsx        # File inisialisasi React ke DOM
+├── vite.config.ts      # Konfigurasi bundler Vite dan Vitest
+└── tsconfig.json       # Konfigurasi TypeScript compiler
+```
+
+---
+
 ## Fitur Utama
 
 - **Peta Interaktif (Leaflet)**: Peta choropleth Bali yang diwarnai dinamis sesuai tingkat kenyamanan termal saat ini.
@@ -43,6 +86,18 @@ Peta choropleth merender warna poligon desa berdasarkan kategori kenyamanan PET 
 - **Sidebar Destinasi**: Dilengkapi pencarian nama, pintasan sorot ke peta, serta pengelompokan per wilayah kabupaten/kecamatan.
 - **PWA & Offline Caching**: Dukungan instalasi aplikasi langsung dari browser, manifest, dan service worker siap pakai (*production-ready*).
 - **Push Notification**: Berlangganan notifikasi otomatis saat batch data prakiraan cuaca baru selesai diproduksi oleh backend.
+
+---
+
+## Dependensi Utama
+
+Detail library kunci yang membentuk inti fungsionalitas WebGIS ini:
+*   **React (v18.3)** & **TypeScript**: Framework utama dan pengetikan statis untuk keamanan kode.
+*   **Leaflet & React-Leaflet**: Rendering peta interaktif serta manipulasi layer choropleth.
+*   **Recharts**: Library visualisasi grafik untuk menyajikan tren data historis dan forecast.
+*   **Supabase JS Client**: Library penghubung database postgres secara realtime dan aman.
+*   **Framer Motion**: Library animasi untuk menghadirkan transisi halus pada elemen antarmuka.
+*   **Tailwind CSS & shadcn/ui**: Kerangka penataan gaya visual komponen UI.
 
 ---
 
@@ -68,6 +123,14 @@ Sebelum mulai menjalankan aplikasi secara lokal, pastikan perangkat Anda sudah t
 
 3. **Konfigurasi Environment**:
    Buat file baru bernama `.env.local` di folder root `webgis/` dan isi variabel berikut:
+
+   | Variabel | Deskripsi | Status |
+   | :--- | :--- | :---: |
+   | `VITE_SUPABASE_URL` | URL endpoint proyek database Supabase Anda. | **Wajib** |
+   | `VITE_SUPABASE_ANON_KEY` | Kunci anonim (public key) untuk akses API Supabase. | **Wajib** |
+   | `VITE_VAPID_PUBLIC_KEY` | Kunci publik VAPID untuk mengaktifkan fitur Push Notifications. | *Opsional* |
+
+   Contoh isi file `.env.local`:
    ```env
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -90,7 +153,7 @@ Sebelum mulai menjalankan aplikasi secara lokal, pastikan perangkat Anda sudah t
 
 ## Pengujian & Testing
 
-Dasbor ini dilengkapi dua jenis verifikasi otomatis:
+Dasbor ini dilengkapi dua jenis verifikasi otomatis untuk menjaga kualitas kode:
 
 ### 1. Unit Testing (Vitest)
 Digunakan untuk menguji logika bisnis deterministik (seperti konversi WITA, perhitungan fuzzy matching, pengelompokan menu, kamus bahasa, dan klasifikasi PET):
