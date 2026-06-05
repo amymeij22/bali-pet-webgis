@@ -112,7 +112,9 @@ npm run test:e2e
 
 ## Kontribusi & Hak Cipta
 
-Proyek ini bersifat **private** (tertutup). Seluruh hak cipta dilindungi oleh pembuat dan Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG). 
+Proyek ini bersifat **private** (tertutup). Seluruh hak cipta dilindungi oleh penulis dan Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG). 
 
-Kontak atau pertanyaan mengenai penelitian ini dapat ditujukan langsung ke institusi:
+Hubungi penulis jika ada pertanyaan lebih lanjut terkait penelitian ini:
+*   **Nama**: Ahmad Meijlan Yasir
+*   **Email**: yasirahmad220504@gmail.com
 *   **Instansi**: Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG), Tangerang.
