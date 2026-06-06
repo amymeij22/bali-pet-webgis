@@ -92,6 +92,49 @@ CREATE POLICY "Allow public update access to push_subscriptions"
   USING (true)
   WITH CHECK (true);
 
+-- -------------------------------------------------------------------------
+-- Langkah 4: Mengamankan View dengan SECURITY INVOKER (Best Practice Supabase)
+-- -------------------------------------------------------------------------
+-- Secara default, view di PostgreSQL lama dapat dievaluasi menggunakan hak akses
+-- pembuatnya (security definer). Untuk mematuhi aturan RLS tabel dasar, kita ubah
+-- view menjadi SECURITY INVOKER menggunakan opsi 'security_invoker = true'.
+-- -------------------------------------------------------------------------
+
+-- 1. Rekonfigurasi View public.latest_batch
+CREATE OR REPLACE VIEW public.latest_batch 
+WITH (security_invoker = true) AS
+SELECT id, produced_at, forecast_start, forecast_end
+FROM public.forecast_batches
+WHERE is_latest = TRUE;
+
+-- 2. Rekonfigurasi View public.villages_with_destinations
+CREATE OR REPLACE VIEW public.villages_with_destinations 
+WITH (security_invoker = true) AS
+SELECT 
+  v.id AS village_id,
+  v.village_name,
+  v.kdepum_code,
+  r.name AS regency,
+  di.name AS district,
+  COALESCE(
+    json_agg(
+      json_build_object(
+        'id', d.id,
+        'destination_name', d.destination_name,
+        'image_url', d.image_url,
+        'latitude', d.latitude,
+        'longitude', d.longitude,
+        'sea_level_height', d.sea_level_height
+      ) ORDER BY d.destination_name
+    ) FILTER (WHERE d.id IS NOT NULL),
+    '[]'::json
+  ) AS destinations
+FROM public.villages v
+LEFT JOIN public.regencies r ON r.id = v.regency_id
+LEFT JOIN public.districts di ON di.id = v.district_id
+LEFT JOIN public.destinations d ON v.id = d.village_id
+GROUP BY v.id, v.village_name, v.kdepum_code, r.name, di.name;
+
 -- =========================================================================
 -- Selesai: Terapkan perubahan ini di dashboard Supabase -> SQL Editor
 -- =========================================================================

@@ -206,13 +206,15 @@
   -- =====================================================
   -- Views for convenience
   -- =====================================================
-  CREATE OR REPLACE VIEW public.latest_batch AS
+  CREATE OR REPLACE VIEW public.latest_batch 
+  WITH (security_invoker = true) AS
   SELECT id, produced_at, forecast_start, forecast_end
   FROM public.forecast_batches
   WHERE is_latest = TRUE;
 
   -- View untuk mendapatkan villages dengan destinations (untuk query yang lebih mudah)
-  CREATE OR REPLACE VIEW public.villages_with_destinations AS
+  CREATE OR REPLACE VIEW public.villages_with_destinations 
+  WITH (security_invoker = true) AS
   SELECT 
     v.id AS village_id,
     v.village_name,
