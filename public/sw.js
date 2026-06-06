@@ -1,9 +1,9 @@
 // Service Worker untuk PWA - Bali PET Thermal Comfort
 // Cache version - bump semua saat deploy baru
-const CACHE_NAME = 'bali-pet-v4';
-const RUNTIME_CACHE = 'bali-pet-runtime-v4';
+const CACHE_NAME = 'bali-pet-v6';
+const RUNTIME_CACHE = 'bali-pet-runtime-v6';
 // Cache terpisah untuk data API Supabase (agar mudah di-manage & tidak tercampur asset)
-const API_CACHE = 'bali-pet-api-v4';
+const API_CACHE = 'bali-pet-api-v6';
 
 // HANYA precache resource STABIL (tidak berubah nama setiap build)
 // JANGAN masukkan asset hashed (index-XYZ.js) → SW gagal install karena file lama tidak ada
@@ -51,6 +51,17 @@ self.addEventListener('activate', (event) => {
             })
         )
       )
+      // Workaround untuk bug Chromium (Chrome 143+ / System WebView) ServiceWorkerAutoPreload yang menyebabkan whitescreen
+      .then(async () => {
+        if (self.registration.navigationPreload) {
+          try {
+            await self.registration.navigationPreload.disable();
+            console.log('[SW] Navigation preload disabled successfully');
+          } catch (e) {
+            console.warn('[SW] Failed to disable navigation preload:', e);
+          }
+        }
+      })
       .then(() => self.clients.claim())
   );
 });
@@ -91,19 +102,30 @@ function isSupabaseRestGet(request, url) {
 }
 
 // ---------------------------------------------------------------------------
+// HELPER – validasi apakah response layak untuk di-cache (basic atau cors 200)
+// Mengizinkan cors karena Vite mengunduh script type="module" dengan atribut crossorigin
+// ---------------------------------------------------------------------------
+function isValidResponseToCache(response) {
+  if (!response || response.status !== 200) return false;
+  return response.type === 'basic' || response.type === 'cors';
+}
+
+// ---------------------------------------------------------------------------
 // STRATEGY: Network-First untuk HTML navigasi
 // → coba network dulu, fallback ke cache '/' jika offline
 // ---------------------------------------------------------------------------
 async function networkFirstHtml(request) {
   try {
     const response = await fetch(request);
-    if (response && response.status === 200 && response.type === 'basic') {
+    if (isValidResponseToCache(response)) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, response.clone());
     }
     return response;
   } catch (e) {
-    const cached = await caches.match(request) || await caches.match('/');
+    // Gunakan ignoreSearch: true agar jika PWA dibuka dengan query parameter (misal: ?utm_source=homescreen atau ?homescreen=1),
+    // pencarian cache tetap berhasil mencocokkan '/'
+    const cached = await caches.match(request, { ignoreSearch: true }) || await caches.match('/', { ignoreSearch: true });
     if (cached) return cached;
     throw e;
   }
@@ -183,10 +205,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(RUNTIME_CACHE);
-        const cached = await cache.match(request);
+        const cached = await cache.match(request, { ignoreSearch: true });
         const networkFetch = fetch(request)
           .then((response) => {
-            if (response && response.status === 200 && response.type === 'basic') {
+            if (isValidResponseToCache(response)) {
               cache.put(request, response.clone());
             }
             return response;
@@ -197,7 +219,7 @@ self.addEventListener('fetch', (event) => {
           networkFetch.catch(() => { });
           return cached;
         }
-        return (await networkFetch) || (await caches.match(request));
+        return (await networkFetch) || (await caches.match(request, { ignoreSearch: true }));
       })()
     );
     return;
@@ -209,11 +231,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(RUNTIME_CACHE);
-        const cached = await cache.match(request);
+        const cached = await cache.match(request, { ignoreSearch: true });
         if (cached) return cached;
         try {
           const response = await fetch(request);
-          if (response && response.status === 200 && response.type === 'basic') {
+          if (isValidResponseToCache(response)) {
             cache.put(request, response.clone());
           }
           return response;
@@ -231,16 +253,16 @@ self.addEventListener('fetch', (event) => {
     (async () => {
       try {
         const response = await fetch(request);
-        if (response && response.status === 200 && response.type === 'basic') {
+        if (isValidResponseToCache(response)) {
           const cache = await caches.open(RUNTIME_CACHE);
           cache.put(request, response.clone());
         }
         return response;
       } catch (err) {
-        const cached = await caches.match(request);
+        const cached = await caches.match(request, { ignoreSearch: true });
         if (cached) return cached;
         if (isHtmlRequest(request)) {
-          return (await caches.match('/')) || new Response('Offline', { status: 503 });
+          return (await caches.match('/', { ignoreSearch: true })) || new Response('Offline', { status: 503 });
         }
         throw err;
       }
