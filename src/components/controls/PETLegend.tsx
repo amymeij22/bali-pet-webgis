@@ -120,15 +120,15 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
 
       {/* Mobile: Overlay button */}
       <motion.button
-        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
-        animate={reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-        transition={reduceMotion ? { duration: 0 } : { delay: 0.15, duration: 0.12, ease: 'easeOut' }}
+        initial={reduceMotion ? false : { x: 40, opacity: 0 }}
+        animate={reduceMotion ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+        transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30, delay: 0.15 }}
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed left-4 bottom-16 z-30 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+        className="md:hidden fixed right-0 top-[calc(50%-28px)] z-30 w-9 h-12 rounded-l-xl bg-card border-l border-y border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
         aria-label={t('pet_view_legend_aria')}
       >
-        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-          <span className="text-[8px] font-bold text-primary-foreground">PET</span>
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+          <span className="text-[9px] font-bold text-primary-foreground">PET</span>
         </div>
       </motion.button>
 

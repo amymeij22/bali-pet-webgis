@@ -50,11 +50,11 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
 
       {/* Mobile: Overlay button */}
       <motion.button
-        initial={reduceMotion ? false : { scale: 0, opacity: 0 }}
-        animate={reduceMotion ? { opacity: 1 } : { scale: 1, opacity: 1 }}
-        transition={{ delay: 0.4 }}
+        initial={reduceMotion ? false : { x: 40, opacity: 0 }}
+        animate={reduceMotion ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
+        transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
         onClick={() => setIsOpen(true)}
-        className="md:hidden fixed left-4 bottom-4 z-30 w-10 h-10 rounded-full glass-panel flex items-center justify-center"
+        className="md:hidden fixed right-0 top-[calc(50%+28px)] z-30 w-9 h-12 rounded-l-xl bg-card border-l border-y border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
         aria-label={t('view_data_sources')}
       >
         <Info className="w-5 h-5 text-muted-foreground" />
