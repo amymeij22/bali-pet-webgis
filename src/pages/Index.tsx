@@ -55,8 +55,6 @@ const Index = () => {
   const [destinationChoropleth, setDestinationChoropleth] = useState<Map<string, { pet_value: number }>>(new Map());
   const [choropleth, setChoropleth] = useState<Map<string, { pet_value: number }>>(new Map()); // per village_id (untuk peta)
   const [popupForecast, setPopupForecast] = useState<null | WeatherForecast>(null);
-  // Status koneksi jaringan
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   // Guard untuk mencegah race condition (request lama menimpa state batch terbaru)
   const loadSeqRef = useRef(0);
@@ -163,12 +161,10 @@ const Index = () => {
   // ---------------------------------------------------------------------------
   // Online / Offline detection
   // Saat kembali online → langsung fetch data terbaru dari Supabase
-  // Saat offline      → flag isOffline=true, data yang ada tetap ditampilkan
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const handleOnline = async () => {
       console.log('[Index] Back online – refreshing data from Supabase...');
-      setIsOffline(false);
       try {
         // Fetch latest batch – jika ada yang lebih baru dari yang sedang ditampilkan,
         // loadBatchForecasts akan memperbarui seluruh state UI secara otomatis
@@ -184,7 +180,6 @@ const Index = () => {
 
     const handleOffline = () => {
       console.log('[Index] Went offline – serving cached data.');
-      setIsOffline(true);
     };
 
     window.addEventListener('online', handleOnline);
@@ -372,22 +367,6 @@ const Index = () => {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
-
-      {/* ── Offline Banner ──────────────────────────────────────────────────── */}
-      {isOffline && (
-        <div
-          className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium"
-          style={{
-            background: 'linear-gradient(90deg, hsl(215 55% 20%) 0%, hsl(215 55% 28%) 100%)',
-            color: 'rgba(255,255,255,0.9)',
-          }}
-          role="status"
-          aria-live="polite"
-        >
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, display: 'inline-block' }} />
-          <span>Mode Offline — menampilkan data terakhir yang tersimpan</span>
-        </div>
-      )}
 
       {/* Full-bleed Map */}
       <LeafletMap
