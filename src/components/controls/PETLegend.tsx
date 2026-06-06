@@ -156,7 +156,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
-              className="relative z-10 map-control w-[200px]"
+              className="relative z-10 glass-panel rounded-xl p-4 w-[280px]"
             >
               <LegendContent />
             </motion.div>

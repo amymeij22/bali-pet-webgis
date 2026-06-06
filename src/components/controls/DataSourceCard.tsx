@@ -85,7 +85,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
-              className="relative z-10 glass-panel rounded-xl px-4 py-4 w-full max-w-[280px]"
+              className="relative z-10 glass-panel rounded-xl p-4 w-[280px]"
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-foreground">{t('data_sources')}</span>

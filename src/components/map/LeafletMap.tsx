@@ -38,6 +38,7 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
   const geoJsonLayer = useRef<L.GeoJSON | null>(null);
   const [geoJsonData, setGeoJsonData] = useState<GeoJSON.FeatureCollection | null>(null);
   const [forecastData, setForecastData] = useState<Map<string, { pet_value: number }>>(new Map());
+  const hasFittedBounds = useRef(false);
 
   // Load GeoJSON
   useEffect(() => {
@@ -282,23 +283,28 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       },
     }).addTo(map.current);
 
-    // Fit bounds to destinations only
-    const destinationBounds = L.latLngBounds([]);
-    geoJsonData.features.forEach((feature) => {
-      if (isDestination(feature) && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
-        const layer = L.geoJSON(feature);
-        destinationBounds.extend(layer.getBounds());
-      }
-    });
-    
-    if (destinationBounds.isValid()) {
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      // Mobile: jangan terlalu zoom-out saat pertama load
-      map.current.fitBounds(destinationBounds, {
-        padding: isMobile ? [10, 10] : [50, 50],
-        // Batasi zoom-out dari fitBounds agar peta tidak terlihat "kecil" di layar mobile.
-        maxZoom: isMobile ? 15 : undefined,
+    // Fit bounds to destinations only (once on initial load)
+    if (!hasFittedBounds.current) {
+      const destinationBounds = L.latLngBounds([]);
+      geoJsonData.features.forEach((feature) => {
+        if (isDestination(feature) && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon')) {
+          const layer = L.geoJSON(feature);
+          destinationBounds.extend(layer.getBounds());
+        }
       });
+      
+      if (destinationBounds.isValid()) {
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        if (isMobile) {
+          // Mobile: setView closer to the center of Bali so the map is larger (less zoomed-out)
+          map.current.setView(BALI_CENTER, 9.5);
+        } else {
+          map.current.fitBounds(destinationBounds, {
+            padding: [50, 50],
+          });
+        }
+        hasFittedBounds.current = true;
+      }
     }
   }, [geoJsonData, getStyle, getVillageId, onVillageClick, isDestination, getVillageInfo, villagesByKdepum, forecastData]);
 

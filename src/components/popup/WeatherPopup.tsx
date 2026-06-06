@@ -413,7 +413,7 @@ export default function WeatherPopup({
 
       {activeTab === 'current' ? (
         /* Weather Parameters */
-        <div className="popup-weather-grid flex-1 overflow-auto">
+        <div className="popup-weather-grid flex-1 overflow-auto scrollbar-hide">
           <WeatherItem
             icon={<Thermometer className="w-5 h-5" />}
             label={t('popup_weather_temp')}
