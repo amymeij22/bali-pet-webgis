@@ -19,7 +19,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
       {/* Desktop: Always visible card */}
       <div
         className={cn(
-          "hidden md:block fixed bottom-4 right-4 z-20",
+          "hidden xl:block fixed bottom-4 right-4 z-20",
           className
         )}
       >
@@ -54,7 +54,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
         animate={reduceMotion ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
         transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
         onClick={() => setIsOpen(true)}
-        className="md:hidden fixed right-0 top-[50%] z-30 w-8 h-[45px] rounded-bl-2xl bg-card border-l border-t border-b border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
+        className="xl:hidden fixed right-0 top-[50%] z-30 w-8 h-[45px] rounded-bl-2xl bg-card border-l border-t border-b border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
         aria-label={t('view_data_sources')}
       >
         <Info className="w-4 h-4 text-muted-foreground" />
@@ -68,7 +68,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
-            className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="xl:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsOpen(false);
             }}

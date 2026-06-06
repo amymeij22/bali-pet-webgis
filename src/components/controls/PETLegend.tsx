@@ -113,7 +113,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
         initial={reduceMotion ? false : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={reduceMotion ? { duration: 0 } : { delay: 0.15, duration: 0.14, ease: 'easeOut' }}
-        className="hidden md:block fixed right-4 top-4 z-30 map-control w-[200px] pointer-events-auto"
+        className="hidden xl:block fixed right-4 top-4 z-30 map-control w-[200px] pointer-events-auto"
       >
         <LegendContent />
       </motion.div>
@@ -124,7 +124,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
         animate={reduceMotion ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
         transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30, delay: 0.15 }}
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed right-0 top-[calc(50%-45px)] z-30 w-8 h-[45px] rounded-tl-2xl bg-card border-l border-t border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
+        className="xl:hidden fixed right-0 top-[calc(50%-45px)] z-30 w-8 h-[45px] rounded-tl-2xl bg-card border-l border-t border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
         aria-label={t('pet_view_legend_aria')}
       >
         <span className="text-[10px] font-bold text-foreground select-none">PET</span>
@@ -138,7 +138,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
-            className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="xl:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsMobileOpen(false);
             }}
