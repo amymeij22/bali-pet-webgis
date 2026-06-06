@@ -66,7 +66,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
         <SelectTrigger className="w-full h-8 text-xs mb-3">
           <SelectValue />
         </SelectTrigger>
-        <SelectContent className="w-[var(--radix-select-trigger-width)]">
+        <SelectContent align="center" className="w-[var(--radix-select-trigger-width)]">
           <SelectItem value="tropical" className="text-xs">{t('pet_standard_tropical')}</SelectItem>
           <SelectItem value="temperate" className="text-xs">{t('pet_standard_temperate')}</SelectItem>
         </SelectContent>
