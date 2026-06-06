@@ -11,74 +11,92 @@ export function useBatchMonitor(
   currentBatchId: string | null,
   onNewBatch?: (batch: ForecastBatch) => void
 ) {
-  const subscriptionRef = useRef<any>(null);
+  const channelRef = useRef<any>(null);
   const lastNotifiedBatchIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Setup Realtime subscription untuk forecast_batches
-    const channel = supabase
-      .channel('forecast_batches_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'forecast_batches',
-          filter: 'is_latest=eq.true',
-        },
-        async (payload) => {
-          console.log('[BatchMonitor] Batch change detected:', payload);
-
-          // Hanya handle INSERT atau UPDATE yang set is_latest = true
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            const newBatch = payload.new as ForecastBatch;
-
-            // Skip jika batch ini sama dengan yang terakhir di-notify
-            if (lastNotifiedBatchIdRef.current === newBatch.id) {
-              console.log('[BatchMonitor] Batch already notified, skipping');
-              return;
-            }
-
-            // Skip jika batch ini sama dengan current batch
-            if (currentBatchId === newBatch.id) {
-              console.log('[BatchMonitor] Batch is current batch, skipping');
-              return;
-            }
-
-            console.log('[BatchMonitor] New batch detected:', newBatch.id);
-
-            // Update last notified
-            lastNotifiedBatchIdRef.current = newBatch.id;
-
-            // Call callback jika ada
-            if (onNewBatch) {
-              onNewBatch(newBatch);
-            }
-
-            // Show local notification sebagai fallback
-            // Push notification utama di-handle oleh Supabase Edge Function via webhook
-            await showLocalNotification(newBatch);
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[BatchMonitor] Realtime subscription status:', status);
-      });
-
-    subscriptionRef.current = channel;
-
-    // Cleanup on unmount
-    return () => {
-      if (subscriptionRef.current) {
-        supabase.removeChannel(subscriptionRef.current);
-        subscriptionRef.current = null;
+    const subscribe = () => {
+      if (!navigator.onLine) {
+        console.log('[BatchMonitor] Offline - skipping realtime subscription');
+        return;
       }
+
+      if (channelRef.current) return;
+
+      console.log('[BatchMonitor] Online - subscribing to realtime changes');
+      channelRef.current = supabase
+        .channel('forecast_batches_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'forecast_batches',
+            filter: 'is_latest=eq.true',
+          },
+          async (payload) => {
+            console.log('[BatchMonitor] Batch change detected:', payload);
+
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+              const newBatch = payload.new as ForecastBatch;
+
+              if (lastNotifiedBatchIdRef.current === newBatch.id) {
+                return;
+              }
+
+              if (currentBatchId === newBatch.id) {
+                return;
+              }
+
+              console.log('[BatchMonitor] New batch detected:', newBatch.id);
+              lastNotifiedBatchIdRef.current = newBatch.id;
+
+              if (onNewBatch) {
+                onNewBatch(newBatch);
+              }
+
+              await showLocalNotification(newBatch);
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('[BatchMonitor] Realtime subscription status:', status);
+        });
+    };
+
+    const unsubscribe = () => {
+      if (channelRef.current) {
+        console.log('[BatchMonitor] Unsubscribing from realtime changes');
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+
+    // Initial attempt
+    subscribe();
+
+    const handleOnline = () => {
+      subscribe();
+    };
+
+    const handleOffline = () => {
+      unsubscribe();
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, [currentBatchId, onNewBatch]);
 
   // Check for new batch on mount (fallback if Realtime doesn't work)
   useEffect(() => {
     const checkForNewBatch = async () => {
+      if (!navigator.onLine) return; // Skip if offline to avoid console log errors
       try {
         const latest = await getLatestBatch();
         if (latest && latest.id !== currentBatchId) {

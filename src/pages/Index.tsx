@@ -121,6 +121,18 @@ const Index = () => {
         const dests = await getDestinationsWithVillage();
         setDestinations(dests);
 
+        // Prefetch destination images in the background if online
+        if (navigator.onLine && dests && dests.length > 0) {
+          setTimeout(() => {
+            console.log('[Index] Prefetching destination images for offline cache...');
+            dests.forEach((d) => {
+              if (d.image_url) {
+                fetch(d.image_url, { mode: 'cors' }).catch(() => {});
+              }
+            });
+          }, 3000);
+        }
+
         const grouped: Record<string, any> = {};
         dests.forEach((d: any) => {
           const vid = d.village_id;

@@ -158,7 +158,7 @@ export default function WeatherPopup({
 
   // Fallback hero image (WEBP) kalau dari DB kosong / gagal load.
   const HERO_FALLBACK_URL =
-    'https://images.unsplash.com/photo-1555861496-0666c8981751?auto=format&fit=crop&w=1200&q=80&fm=webp';
+    'https://unsplash.com/id/foto/puncak-gunung-berkabut-1Z2niiBPg5A';
   const desiredHeroSrcRaw = (heroImageUrl ?? '').trim();
   const desiredHeroSrc = useMemo(() => {
     const raw = desiredHeroSrcRaw;
@@ -203,14 +203,14 @@ export default function WeatherPopup({
   let pet = 0;
   let petColor = '#9ca3af'; // grey-400 for no data
   let petRange = PET_RANGES[standard]['neutral'];
-  
+
   if (forecast) {
     pet = forecast.pet_value;
     category = classifyPet(pet, standard);
     petColor = PET_COLORS[category];
     petRange = PET_RANGES[standard][category];
   }
-  
+
   const forecastDate = forecast ? toWitaDate(forecast.forecast_time) : currentDate;
 
   const locationLine = useMemo(() => {
@@ -391,22 +391,20 @@ export default function WeatherPopup({
         <button
           type="button"
           onClick={() => setActiveTab('current')}
-          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all duration-200 ${
-            activeTab === 'current'
-              ? "border-primary text-primary bg-background/40"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/10"
-          }`}
+          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all duration-200 ${activeTab === 'current'
+            ? "border-primary text-primary bg-background/40"
+            : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/10"
+            }`}
         >
           {t('popup_tab_current')}
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('trend')}
-          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all duration-200 ${
-            activeTab === 'trend'
-              ? "border-primary text-primary bg-background/40"
-              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/10"
-          }`}
+          className={`flex-1 py-2 text-xs font-bold border-b-2 transition-all duration-200 ${activeTab === 'trend'
+            ? "border-primary text-primary bg-background/40"
+            : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/10"
+            }`}
         >
           {t('popup_tab_trend')}
         </button>
@@ -482,26 +480,26 @@ export default function WeatherPopup({
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border) / 0.4)" />
-                  <XAxis 
-                    dataKey="timeStr" 
-                    tickLine={false} 
+                  <XAxis
+                    dataKey="timeStr"
+                    tickLine={false}
                     axisLine={false}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                   />
-                  <YAxis 
+                  <YAxis
                     domain={['auto', 'auto']}
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
                   />
                   <RechartsTooltip content={<CustomChartTooltip />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="pet" 
-                    stroke="url(#strokeGradient)" 
+                  <Area
+                    type="monotone"
+                    dataKey="pet"
+                    stroke="url(#strokeGradient)"
                     strokeWidth={2.5}
-                    fillOpacity={1} 
-                    fill="url(#fillGradient)" 
+                    fillOpacity={1}
+                    fill="url(#fillGradient)"
                     dot={<CustomDot />}
                     activeDot={<CustomActiveDot />}
                   />

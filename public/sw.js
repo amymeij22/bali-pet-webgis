@@ -158,8 +158,8 @@ async function cacheFirstImage(request) {
     }
     return response;
   } catch (err) {
-    console.warn('[SW] Failed to fetch image from network:', request.url, err);
-    throw err;
+    console.log('[SW] Image offline:', request.url);
+    return new Response('Offline', { status: 503 });
   }
 }
 
