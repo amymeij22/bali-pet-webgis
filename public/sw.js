@@ -1,8 +1,8 @@
-const CACHE_NAME = 'bali-pet-v6';
-const RUNTIME_CACHE = 'bali-pet-runtime-v6';
+const CACHE_NAME = 'bali-pet-v1';
+const RUNTIME_CACHE = 'bali-pet-runtime-v1';
 // Cache terpisah untuk data API Supabase (agar mudah di-manage & tidak tercampur asset)
-const API_CACHE = 'bali-pet-api-v6';
-const IMAGE_CACHE = 'bali-pet-images-v6';
+const API_CACHE = 'bali-pet-api-v1';
+const IMAGE_CACHE = 'bali-pet-images-v1';
 
 // HANYA precache resource STABIL (tidak berubah nama setiap build)
 // JANGAN masukkan asset hashed (index-XYZ.js) → SW gagal install karena file lama tidak ada
@@ -114,7 +114,7 @@ function isValidResponseToCache(response) {
 // ---------------------------------------------------------------------------
 function isImageRequest(request, url) {
   if (request.destination === 'image') return true;
-  
+
   const pathname = url.pathname.toLowerCase();
   return (
     pathname.endsWith('.png') ||
@@ -141,11 +141,11 @@ function isImageRequest(request, url) {
 // ---------------------------------------------------------------------------
 async function cacheFirstImage(request) {
   const cache = await caches.open(IMAGE_CACHE);
-  
+
   // Cari di cache (sensitif terhadap query parameter agar query dimensi gambar yang berbeda tidak tumpang tindih)
   let cached = await cache.match(request);
   if (cached) return cached;
-  
+
   // Jika tidak cocok sensitif, coba ignoreSearch untuk fallbacks
   cached = await cache.match(request, { ignoreSearch: true });
   if (cached) return cached;
