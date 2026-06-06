@@ -101,6 +101,7 @@ CREATE POLICY "Allow public update access to push_subscriptions"
 -- -------------------------------------------------------------------------
 
 -- 1. Rekonfigurasi View public.latest_batch
+DROP VIEW IF EXISTS public.latest_batch CASCADE;
 CREATE OR REPLACE VIEW public.latest_batch 
 WITH (security_invoker = true) AS
 SELECT id, produced_at, forecast_start, forecast_end
@@ -108,6 +109,7 @@ FROM public.forecast_batches
 WHERE is_latest = TRUE;
 
 -- 2. Rekonfigurasi View public.villages_with_destinations
+DROP VIEW IF EXISTS public.villages_with_destinations CASCADE;
 CREATE OR REPLACE VIEW public.villages_with_destinations 
 WITH (security_invoker = true) AS
 SELECT 
@@ -135,6 +137,3 @@ LEFT JOIN public.districts di ON di.id = v.district_id
 LEFT JOIN public.destinations d ON v.id = d.village_id
 GROUP BY v.id, v.village_name, v.kdepum_code, r.name, di.name;
 
--- =========================================================================
--- Selesai: Terapkan perubahan ini di dashboard Supabase -> SQL Editor
--- =========================================================================
