@@ -264,6 +264,7 @@ export default function WeatherPopup({
             loading="lazy"
             decoding="async"
             referrerPolicy="no-referrer"
+            crossOrigin="anonymous"
             onError={() => {
               if (heroSrc !== HERO_FALLBACK_URL) setHeroSrc(HERO_FALLBACK_URL);
             }}

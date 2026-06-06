@@ -1,9 +1,8 @@
-// Service Worker untuk PWA - Bali PET Thermal Comfort
-// Cache version - bump semua saat deploy baru
 const CACHE_NAME = 'bali-pet-v6';
 const RUNTIME_CACHE = 'bali-pet-runtime-v6';
 // Cache terpisah untuk data API Supabase (agar mudah di-manage & tidak tercampur asset)
 const API_CACHE = 'bali-pet-api-v6';
+const IMAGE_CACHE = 'bali-pet-images-v6';
 
 // HANYA precache resource STABIL (tidak berubah nama setiap build)
 // JANGAN masukkan asset hashed (index-XYZ.js) → SW gagal install karena file lama tidak ada
@@ -38,7 +37,7 @@ self.addEventListener('install', (event) => {
 // ACTIVATE – bersihkan cache versi lama, lalu claim semua clients
 // ---------------------------------------------------------------------------
 self.addEventListener('activate', (event) => {
-  const KNOWN_CACHES = [CACHE_NAME, RUNTIME_CACHE, API_CACHE];
+  const KNOWN_CACHES = [CACHE_NAME, RUNTIME_CACHE, API_CACHE, IMAGE_CACHE];
   event.waitUntil(
     caches.keys()
       .then((cacheNames) =>
@@ -111,6 +110,60 @@ function isValidResponseToCache(response) {
 }
 
 // ---------------------------------------------------------------------------
+// HELPER – apakah request ini gambar (statis, Supabase Storage, map tiles, dll.)
+// ---------------------------------------------------------------------------
+function isImageRequest(request, url) {
+  if (request.destination === 'image') return true;
+  
+  const pathname = url.pathname.toLowerCase();
+  return (
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.jpeg') ||
+    pathname.endsWith('.webp') ||
+    pathname.endsWith('.gif') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.ico') ||
+    url.hostname.includes('unsplash.com') ||
+    url.hostname.includes('tile.openstreetmap.org') ||
+    pathname.includes('/storage/v1/object/public/')
+  );
+}
+
+// ---------------------------------------------------------------------------
+// STRATEGY: Cache-First untuk Gambar
+//
+// Perilaku:
+//   CARI DI CACHE → ada, langsung return (paling instan/seamless)
+//   TIDAK ADA DI CACHE → ambil dari network, simpan ke IMAGE_CACHE, return response
+//
+// Catatan: Mendukung CORS dan fallback Opaque jika ada yang terlewat
+// ---------------------------------------------------------------------------
+async function cacheFirstImage(request) {
+  const cache = await caches.open(IMAGE_CACHE);
+  
+  // Cari di cache (sensitif terhadap query parameter agar query dimensi gambar yang berbeda tidak tumpang tindih)
+  let cached = await cache.match(request);
+  if (cached) return cached;
+  
+  // Jika tidak cocok sensitif, coba ignoreSearch untuk fallbacks
+  cached = await cache.match(request, { ignoreSearch: true });
+  if (cached) return cached;
+
+  try {
+    const response = await fetch(request);
+    // Simpan jika response sukses (200) atau opaque (untuk external CDN yang tidak support CORS)
+    if (response && (response.status === 200 || response.type === 'opaque')) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    console.warn('[SW] Failed to fetch image from network:', request.url, err);
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // STRATEGY: Network-First untuk HTML navigasi
 // → coba network dulu, fallback ke cache '/' jika offline
 // ---------------------------------------------------------------------------
@@ -176,30 +229,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── 1. Supabase REST GET: Network-First + API Cache ──────────────────────
+  // ── 1. Image Cache (Cache-First) ─────────────────────────────────────────
+  // Intercept semua request gambar (statis, Supabase Storage, map tiles, dll.)
+  if (isImageRequest(request, url)) {
+    event.respondWith(cacheFirstImage(request));
+    return;
+  }
+
+  // ── 2. Supabase REST GET: Network-First + API Cache ──────────────────────
   // Ini yang memungkinkan offline dengan data terakhir yang pernah dimuat
   if (isSupabaseRestGet(request, url)) {
     event.respondWith(networkFirstAPI(request));
     return;
   }
 
-  // ── 2. Supabase lainnya (Realtime WS, auth, storage): selalu pass ────────
+  // ── 3. Supabase lainnya (Realtime WS, auth, dll.): selalu pass ────────────
+  // Catatan: request storage public GET sudah di-handle oleh rule 1 di atas
   if (url.hostname.includes('supabase.co') || url.hostname.includes('supabase.io')) {
     return; // WebSocket Realtime tidak bisa di-cache, biarkan browser handle
   }
 
-  // ── 3. Semua origin eksternal (map tiles, fonts, CDN): selalu pass ───────
+  // ── 4. Semua origin eksternal (fonts, CDN): selalu pass ──────────────────
+  // Catatan: request map tiles / Unsplash sudah di-handle oleh rule 1 di atas
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // ── 4. HTML navigation: Network-First → fallback '/' untuk SPA ──────────
+  // ── 5. HTML navigation: Network-First → fallback '/' untuk SPA ──────────
   if (isHtmlRequest(request)) {
     event.respondWith(networkFirstHtml(request));
     return;
   }
 
-  // ── 5. GeoJSON peta: Stale-While-Revalidate ──────────────────────────────
+  // ── 6. GeoJSON peta: Stale-While-Revalidate ──────────────────────────────
   // Serve cache langsung, perbarui di background
   if (url.pathname.endsWith('.geojson')) {
     event.respondWith(
@@ -225,7 +287,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── 6. Static assets hashed (/assets/): Cache-First ─────────────────────
+  // ── 7. Static assets hashed (/assets/): Cache-First ─────────────────────
   // Aman di-cache selamanya karena hash berubah setiap build baru
   if (isStaticAsset(url)) {
     event.respondWith(
@@ -248,7 +310,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── 7. Default: Network-First with cache fallback ────────────────────────
+  // ── 8. Default: Network-First with cache fallback ────────────────────────
   event.respondWith(
     (async () => {
       try {
