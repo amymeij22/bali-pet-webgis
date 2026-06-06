@@ -55,6 +55,8 @@ const Index = () => {
   const [destinationChoropleth, setDestinationChoropleth] = useState<Map<string, { pet_value: number }>>(new Map());
   const [choropleth, setChoropleth] = useState<Map<string, { pet_value: number }>>(new Map()); // per village_id (untuk peta)
   const [popupForecast, setPopupForecast] = useState<null | WeatherForecast>(null);
+  // Status koneksi jaringan
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
   // Guard untuk mencegah race condition (request lama menimpa state batch terbaru)
   const loadSeqRef = useRef(0);
@@ -110,17 +112,17 @@ const Index = () => {
     [resetDynamicState]
   );
 
-  // Load initial batch, times, villages, and destinations
-  // IMPORTANT: Load villages and destinations even if no batch exists
+  // ---------------------------------------------------------------------------
+  // Init: load destinations + batch saat pertama buka
+  // SW akan otomatis serve data dari cache jika offline
+  // ---------------------------------------------------------------------------
   useEffect(() => {
     (async () => {
       try {
-        // Always load villages and destinations first (even without batch)
+        // Load destinations (SW akan serve dari API cache jika offline)
         const dests = await getDestinationsWithVillage();
         setDestinations(dests);
 
-        // Bangun struktur villagesWithDestinations dari query yang sudah terbukti jalan (destinations join villages).
-        // Ini menghindari kegagalan query `villages`/view akibat RLS/view mismatch.
         const grouped: Record<string, any> = {};
         dests.forEach((d: any) => {
           const vid = d.village_id;
@@ -146,22 +148,56 @@ const Index = () => {
         });
         setVillagesWithDestinations(Object.values(grouped));
 
-        // Try to load batch and forecasts (may not exist)
         const latest = await getLatestBatch();
         if (latest) {
           await loadBatchForecasts(latest);
         }
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error('Failed to init data:', err);
+        console.error('[Index] Failed to init data:', err);
+        // Jika offline & SW belum cache → destinations kosong, app tetap jalan (peta muncul)
       }
     })();
   }, [loadBatchForecasts]);
 
-  // Handle new batch detected
+  // ---------------------------------------------------------------------------
+  // Online / Offline detection
+  // Saat kembali online → langsung fetch data terbaru dari Supabase
+  // Saat offline      → flag isOffline=true, data yang ada tetap ditampilkan
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const handleOnline = async () => {
+      console.log('[Index] Back online – refreshing data from Supabase...');
+      setIsOffline(false);
+      try {
+        // Fetch latest batch – jika ada yang lebih baru dari yang sedang ditampilkan,
+        // loadBatchForecasts akan memperbarui seluruh state UI secara otomatis
+        const latest = await getLatestBatch();
+        if (latest && latest.id !== currentBatchId) {
+          console.log('[Index] New batch found on reconnect:', latest.id);
+          await loadBatchForecasts(latest);
+        }
+      } catch (err) {
+        console.error('[Index] Failed to refresh after reconnect:', err);
+      }
+    };
+
+    const handleOffline = () => {
+      console.log('[Index] Went offline – serving cached data.');
+      setIsOffline(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [currentBatchId, loadBatchForecasts]);
+
+  // Handle new batch detected via Supabase Realtime
   const handleNewBatch = useCallback(async (batch: ForecastBatch) => {
     console.log('[Index] New batch detected, reloading data...', batch.id);
-
     await loadBatchForecasts(batch);
   }, [loadBatchForecasts]);
 
@@ -336,6 +372,23 @@ const Index = () => {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
+
+      {/* ── Offline Banner ──────────────────────────────────────────────────── */}
+      {isOffline && (
+        <div
+          className="fixed top-0 left-0 right-0 z-[60] flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium"
+          style={{
+            background: 'linear-gradient(90deg, hsl(215 55% 20%) 0%, hsl(215 55% 28%) 100%)',
+            color: 'rgba(255,255,255,0.9)',
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', flexShrink: 0, display: 'inline-block' }} />
+          <span>Mode Offline — menampilkan data terakhir yang tersimpan</span>
+        </div>
+      )}
+
       {/* Full-bleed Map */}
       <LeafletMap
         selectedTime={selectedTime}

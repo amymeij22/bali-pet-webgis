@@ -11,8 +11,37 @@ export default defineConfig(({ mode }) => ({
   },
   base: "/",
   build: {
-    target: "es2018",
+    // Target ES2018 + Chrome 61 for wide Android WebView compatibility
+    target: ["es2018", "chrome61"],
     cssTarget: "chrome61",
+    // Split chunks to prevent giant 1.3MB bundle causing OOM on Android WebView
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // Animation library (heavy, isolate for caching)
+          "vendor-motion": ["framer-motion"],
+          // Map library (heavy, isolate for caching)
+          "vendor-map": ["leaflet"],
+          // UI & state libraries
+          "vendor-ui": [
+            "@tanstack/react-query",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-select",
+            "@radix-ui/react-slider",
+            "lucide-react",
+          ],
+          // Supabase client
+          "vendor-supabase": ["@supabase/supabase-js"],
+        },
+      },
+    },
+    // Increase chunk size warning limit (map tiles bundles are naturally large)
+    chunkSizeWarningLimit: 1000,
+    // Don't inline small assets – keep them as separate cached files
+    assetsInlineLimit: 0,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

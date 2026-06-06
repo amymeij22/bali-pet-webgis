@@ -1,56 +1,70 @@
-// Service Worker untuk PWA
-// Cache version - update ini untuk force refresh cache
-const CACHE_NAME = 'bali-pet-v2';
-const RUNTIME_CACHE = 'bali-pet-runtime-v2';
+// Service Worker untuk PWA - Bali PET Thermal Comfort
+// Cache version - bump semua saat deploy baru
+const CACHE_NAME = 'bali-pet-v4';
+const RUNTIME_CACHE = 'bali-pet-runtime-v4';
+// Cache terpisah untuk data API Supabase (agar mudah di-manage & tidak tercampur asset)
+const API_CACHE = 'bali-pet-api-v4';
 
-// Assets yang akan di-cache saat install
+// HANYA precache resource STABIL (tidak berubah nama setiap build)
+// JANGAN masukkan asset hashed (index-XYZ.js) → SW gagal install karena file lama tidak ada
 const PRECACHE_ASSETS = [
   '/',
-  '/index.html',
-  '/data/destinasi_wisata_bali.geojson',
-  '/favicon.ico',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  '/favicon.ico',
+  '/data/destinasi_wisata_bali.geojson',
 ];
 
-// Install event - cache assets penting
+// ---------------------------------------------------------------------------
+// INSTALL – cache resource stabil, lalu skipWaiting
+// ---------------------------------------------------------------------------
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[SW] Precaching assets');
-        return cache.addAll(PRECACHE_ASSETS);
+        console.log('[SW] Precaching stable assets');
+        return Promise.allSettled(
+          PRECACHE_ASSETS.map((url) =>
+            cache.add(url).catch((err) => {
+              console.warn('[SW] Precache failed for:', url, err);
+            })
+          )
+        );
       })
       .then(() => self.skipWaiting())
-      .catch((err) => {
-        console.error('[SW] Precache failed:', err);
-      })
   );
 });
 
-// Activate event - cleanup cache lama
+// ---------------------------------------------------------------------------
+// ACTIVATE – bersihkan cache versi lama, lalu claim semua clients
+// ---------------------------------------------------------------------------
 self.addEventListener('activate', (event) => {
+  const KNOWN_CACHES = [CACHE_NAME, RUNTIME_CACHE, API_CACHE];
   event.waitUntil(
     caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
+      .then((cacheNames) =>
+        Promise.all(
           cacheNames
-            .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
+            .filter((name) => !KNOWN_CACHES.includes(name))
             .map((name) => {
               console.log('[SW] Deleting old cache:', name);
               return caches.delete(name);
             })
-        );
-      })
+        )
+      )
       .then(() => self.clients.claim())
   );
 });
 
+// ---------------------------------------------------------------------------
+// HELPER – apakah request ini navigasi HTML (SPA)
+// ---------------------------------------------------------------------------
 function isHtmlRequest(request) {
   return request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html');
 }
 
+// ---------------------------------------------------------------------------
+// HELPER – apakah asset statis berhash (JS, CSS, font, gambar dari /assets/)
+// ---------------------------------------------------------------------------
 function isStaticAsset(url) {
   return (
     url.origin === self.location.origin &&
@@ -64,92 +78,113 @@ function isStaticAsset(url) {
   );
 }
 
-function isGeoJson(url) {
-  return url.origin === self.location.origin && url.pathname.endsWith('.geojson');
+// ---------------------------------------------------------------------------
+// HELPER – apakah request ke Supabase REST API (bukan Realtime/auth/storage)
+// Hanya intercept GET /rest/v1/ agar read-only data bisa di-cache
+// ---------------------------------------------------------------------------
+function isSupabaseRestGet(request, url) {
+  return (
+    request.method === 'GET' &&
+    (url.hostname.includes('supabase.co') || url.hostname.includes('supabase.io')) &&
+    url.pathname.startsWith('/rest/v1/')
+  );
 }
 
-async function networkFirst(request) {
+// ---------------------------------------------------------------------------
+// STRATEGY: Network-First untuk HTML navigasi
+// → coba network dulu, fallback ke cache '/' jika offline
+// ---------------------------------------------------------------------------
+async function networkFirstHtml(request) {
   try {
     const response = await fetch(request);
-    // Cache only successful same-origin basic responses
     if (response && response.status === 200 && response.type === 'basic') {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, response.clone());
     }
     return response;
   } catch (e) {
-    const cached = await caches.match(request);
+    const cached = await caches.match(request) || await caches.match('/');
     if (cached) return cached;
-    // SPA fallback
-    if (isHtmlRequest(request)) return caches.match('/index.html');
     throw e;
   }
 }
 
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(RUNTIME_CACHE);
-  const cached = await cache.match(request);
-  const networkPromise = fetch(request)
-    .then((response) => {
-      if (response && response.status === 200 && response.type === 'basic') {
-        cache.put(request, response.clone());
-      }
-      return response;
-    })
-    .catch(() => null);
-
-  // If we have cache, serve it immediately and refresh in background.
-  if (cached) {
-    eventWaitUntilSafe(networkPromise);
-    return cached;
+// ---------------------------------------------------------------------------
+// STRATEGY: Network-First + Cache Fallback untuk Supabase REST API
+//
+// Perilaku:
+//   ONLINE  → fetch ke Supabase, simpan response ke API_CACHE, return fresh data
+//   OFFLINE → fetch gagal, return data terakhir dari API_CACHE
+//   KEMBALI ONLINE → fetch berhasil lagi, cache diperbarui otomatis
+//
+// Catatan: response.type === 'cors' karena Supabase adalah cross-origin
+// ---------------------------------------------------------------------------
+async function networkFirstAPI(request) {
+  const cache = await caches.open(API_CACHE);
+  try {
+    const response = await fetch(request);
+    // Supabase REST returns type 'cors' (cross-origin authenticated)
+    if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
+      cache.put(request, response.clone());
+      console.log('[SW] API cached:', new URL(request.url).pathname.split('/').pop()?.split('?')[0]);
+    }
+    return response;
+  } catch (err) {
+    // Network failed → coba kembalikan data yang sudah di-cache
+    const cached = await cache.match(request);
+    if (cached) {
+      console.log('[SW] Offline – serving cached API response for:', new URL(request.url).pathname);
+      return cached;
+    }
+    // Tidak ada cache → lempar error agar app bisa handle dengan pesan offline
+    console.warn('[SW] No cached API data available for:', new URL(request.url).pathname);
+    throw err;
   }
-  const network = await networkPromise;
-  return network || (await caches.match(request));
 }
 
-function eventWaitUntilSafe(promise) {
-  // no-op helper: fetch handler may call respondWith before waitUntil.
-  // We only use this for background refresh; if it rejects, ignore.
-  promise?.catch?.(() => {});
-}
-
-// Fetch event - best practice:
-// - HTML navigations: network-first (fast updates), fallback cache/offline
-// - Build assets: cache-first (hashed), with runtime cache
-// - GeoJSON: stale-while-revalidate
-// - Supabase API: always network (skip)
+// ---------------------------------------------------------------------------
+// FETCH EVENT – routing utama
+// ---------------------------------------------------------------------------
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // Skip non-GET (POST/PATCH/DELETE tidak di-cache)
   if (request.method !== 'GET') {
     return;
   }
 
-  // Skip Supabase API calls (always network)
-  if (url.hostname.includes('supabase.co')) {
+  // ── 1. Supabase REST GET: Network-First + API Cache ──────────────────────
+  // Ini yang memungkinkan offline dengan data terakhir yang pernah dimuat
+  if (isSupabaseRestGet(request, url)) {
+    event.respondWith(networkFirstAPI(request));
     return;
   }
 
-  // Skip external resources (tiles, dll)
-  if (url.origin !== self.location.origin && !url.pathname.startsWith('/data/')) {
+  // ── 2. Supabase lainnya (Realtime WS, auth, storage): selalu pass ────────
+  if (url.hostname.includes('supabase.co') || url.hostname.includes('supabase.io')) {
+    return; // WebSocket Realtime tidak bisa di-cache, biarkan browser handle
+  }
+
+  // ── 3. Semua origin eksternal (map tiles, fonts, CDN): selalu pass ───────
+  if (url.origin !== self.location.origin) {
     return;
   }
 
-  // HTML navigation: network-first
+  // ── 4. HTML navigation: Network-First → fallback '/' untuk SPA ──────────
   if (isHtmlRequest(request)) {
-    event.respondWith(networkFirst(request));
+    event.respondWith(networkFirstHtml(request));
     return;
   }
 
-  // GeoJSON: stale-while-revalidate
-  if (isGeoJson(url)) {
+  // ── 5. GeoJSON peta: Stale-While-Revalidate ──────────────────────────────
+  // Serve cache langsung, perbarui di background
+  if (url.pathname.endsWith('.geojson')) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(RUNTIME_CACHE);
         const cached = await cache.match(request);
-        const network = fetch(request)
+        const networkFetch = fetch(request)
           .then((response) => {
             if (response && response.status === 200 && response.type === 'basic') {
               cache.put(request, response.clone());
@@ -159,56 +194,72 @@ self.addEventListener('fetch', (event) => {
           .catch(() => null);
 
         if (cached) {
-          event.waitUntil(network);
+          networkFetch.catch(() => { });
           return cached;
         }
-        const res = await network;
-        return res || (await caches.match(request));
+        return (await networkFetch) || (await caches.match(request));
       })()
     );
     return;
   }
 
-  // Static assets: cache-first (hashed assets are safe to cache)
+  // ── 6. Static assets hashed (/assets/): Cache-First ─────────────────────
+  // Aman di-cache selamanya karena hash berubah setiap build baru
   if (isStaticAsset(url)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(RUNTIME_CACHE);
         const cached = await cache.match(request);
         if (cached) return cached;
-        const response = await fetch(request);
-        if (response && response.status === 200 && response.type === 'basic') {
-          cache.put(request, response.clone());
+        try {
+          const response = await fetch(request);
+          if (response && response.status === 200 && response.type === 'basic') {
+            cache.put(request, response.clone());
+          }
+          return response;
+        } catch (err) {
+          console.warn('[SW] Static asset offline:', url.pathname);
+          return new Response('Asset unavailable offline', { status: 503 });
         }
-        return response;
       })()
     );
     return;
   }
 
-  // Default: try cache then network
+  // ── 7. Default: Network-First with cache fallback ────────────────────────
   event.respondWith(
     (async () => {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-      const response = await fetch(request);
-      if (response && response.status === 200 && response.type === 'basic') {
-        const cache = await caches.open(RUNTIME_CACHE);
-        cache.put(request, response.clone());
+      try {
+        const response = await fetch(request);
+        if (response && response.status === 200 && response.type === 'basic') {
+          const cache = await caches.open(RUNTIME_CACHE);
+          cache.put(request, response.clone());
+        }
+        return response;
+      } catch (err) {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (isHtmlRequest(request)) {
+          return (await caches.match('/')) || new Response('Offline', { status: 503 });
+        }
+        throw err;
       }
-      return response;
     })()
   );
 });
 
-// Message handler untuk update cache dari client
+// ---------------------------------------------------------------------------
+// MESSAGE – handle SKIP_WAITING dari client
+// ---------------------------------------------------------------------------
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-// Push event - handle incoming push notifications
+// ---------------------------------------------------------------------------
+// PUSH – handle incoming push notifications
+// ---------------------------------------------------------------------------
 self.addEventListener('push', (event) => {
   console.log('[SW] Push event received:', event);
 
@@ -225,7 +276,6 @@ self.addEventListener('push', (event) => {
     },
   };
 
-  // Parse push data jika ada
   if (event.data) {
     try {
       const data = event.data.json();
@@ -234,7 +284,6 @@ self.addEventListener('push', (event) => {
       if (data.url) notificationData.data.url = data.url;
       if (data.batchId) notificationData.data.batchId = data.batchId;
     } catch (e) {
-      console.log('[SW] Push data is text:', event.data.text());
       notificationData.body = event.data.text() || notificationData.body;
     }
   }
@@ -249,48 +298,35 @@ self.addEventListener('push', (event) => {
       requireInteraction: notificationData.requireInteraction,
       vibrate: [200, 100, 200],
       actions: [
-        {
-          action: 'open',
-          title: 'Buka Aplikasi',
-        },
-        {
-          action: 'close',
-          title: 'Tutup',
-        },
+        { action: 'open', title: 'Buka Aplikasi' },
+        { action: 'close', title: 'Tutup' },
       ],
     })
   );
 });
 
-// Notification click event - handle user clicking notification
+// ---------------------------------------------------------------------------
+// NOTIFICATION CLICK – buka / fokus window app
+// ---------------------------------------------------------------------------
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event);
-
   event.notification.close();
 
-  if (event.action === 'close') {
-    return;
-  }
+  if (event.action === 'close') return;
 
-  // Default action atau 'open' action
   const urlToOpen = event.notification.data?.url || '/';
-
   event.waitUntil(
-    clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true,
-    }).then((clientList) => {
-      // Cek apakah ada window yang sudah terbuka
-      for (let i = 0; i < clientList.length; i++) {
-        const client = clientList[i];
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url === urlToOpen && 'focus' in client) {
+            return client.focus();
+          }
         }
-      }
-      // Buka window baru jika belum ada
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
   );
 });
