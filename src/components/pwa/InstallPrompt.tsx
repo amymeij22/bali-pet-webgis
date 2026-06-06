@@ -9,6 +9,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const INSTALL_PROMPT_DELAY = 15000; // 15 seconds
+const AUTO_CLOSE_DELAY = 6000; // 6 seconds (between 4-7 seconds range)
+
 export default function InstallPrompt() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
@@ -58,13 +61,13 @@ export default function InstallPrompt() {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
-      // Show prompt after 3 seconds (user sudah lihat konten)
+      // Show prompt after 15 seconds (user sudah lihat konten)
       setTimeout(() => {
         if (!isStandaloneMode) {
           console.log('[PWA] Showing install prompt');
           setShowPrompt(true);
         }
-      }, 3000);
+      }, INSTALL_PROMPT_DELAY);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -92,7 +95,7 @@ export default function InstallPrompt() {
         setTimeout(() => {
           console.log('[PWA] Showing manual install prompt for mobile');
           setShowPrompt(true);
-        }, 5000); // Show after 5 seconds for mobile
+        }, INSTALL_PROMPT_DELAY);
       }
     }
 
@@ -103,7 +106,7 @@ export default function InstallPrompt() {
         setTimeout(() => {
           console.log('[PWA] Showing iOS install prompt');
           setShowPrompt(true);
-        }, 5000);
+        }, INSTALL_PROMPT_DELAY);
       }
     }
 
@@ -172,13 +175,13 @@ export default function InstallPrompt() {
     return null;
   }
 
-  // Auto-close after 10 seconds if not responded
+  // Auto-close after AUTO_CLOSE_DELAY (6 seconds) if not responded
   useEffect(() => {
     if (showPrompt) {
       autoCloseTimerRef.current = setTimeout(() => {
-        console.log('[PWA] Auto-closing prompt after 10 seconds');
+        console.log('[PWA] Auto-closing prompt after 6 seconds');
         handleDismiss();
-      }, 10000); // 10 seconds
+      }, AUTO_CLOSE_DELAY);
 
       return () => {
         if (autoCloseTimerRef.current) {
@@ -188,62 +191,55 @@ export default function InstallPrompt() {
     }
   }, [showPrompt]);
 
-  // Show prompt if:
-  // 1. Prompt state is true (set by useEffect)
-  // 2. OR on mobile/iOS (for manual install instructions)
-  if (!showPrompt) {
-    return null;
-  }
-
   return (
     <AnimatePresence>
-      <motion.div
-        initial={reduceMotion ? false : { y: 100, opacity: 0 }}
-        animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed bottom-4 left-4 right-4 z-[35] md:left-auto md:right-4 md:w-96 pointer-events-auto"
-      >
-        <div className="glass-panel rounded-xl p-4 shadow-lg border border-border">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Download className="w-5 h-5 text-primary" />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-foreground mb-1">
+      {showPrompt && (
+        <motion.div
+          initial={reduceMotion ? false : { y: 100, opacity: 0 }}
+          animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
+          className="fixed bottom-4 left-4 right-4 z-[35] md:left-auto md:right-4 md:w-96 pointer-events-auto"
+        >
+          <div className="glass-panel rounded-xl p-4 shadow-lg border border-border">
+            {/* Header Row: Icon + Title */}
+            <div className="flex items-center gap-2 mb-2">
+              <Download className="w-4 h-4 text-primary flex-shrink-0" />
+              <h3 className="text-sm font-semibold text-foreground">
                 {t('pwa_install_title')}
               </h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                {deferredPrompt
-                  ? t('pwa_install_desc_default')
-                  : isIOS
-                    ? t('pwa_install_desc_ios')
-                    : t('pwa_install_desc_other')}
-              </p>
-              
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleInstall}
-                  className="flex-1"
-                >
-                  {deferredPrompt ? t('pwa_install_action_install') : t('pwa_install_action_how')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleDismiss}
-                  className="px-2"
-                  aria-label={t('close')}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
+            </div>
+            
+            {/* Content Description */}
+            <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+              {deferredPrompt
+                ? t('pwa_install_desc_default')
+                : isIOS
+                  ? t('pwa_install_desc_ios')
+                  : t('pwa_install_desc_other')}
+            </p>
+            
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={handleInstall}
+                className="flex-1 text-xs h-8 font-semibold"
+              >
+                {deferredPrompt ? t('pwa_install_action_install') : t('pwa_install_action_how')}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDismiss}
+                className="flex-1 text-xs h-8 font-semibold"
+              >
+                {t('close')}
+              </Button>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
