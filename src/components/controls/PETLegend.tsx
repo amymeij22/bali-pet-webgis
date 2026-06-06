@@ -77,8 +77,6 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
         {CATEGORY_ORDER.map((category) => {
           const range = ranges[category];
           const color = PET_COLORS[category];
-          const minDisplay = range.min === -999 ? '<' : '';
-          const maxDisplay = range.max === 999 ? '>' : '';
 
           return (
             <div key={category} className="legend-item">
@@ -92,9 +90,14 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
                 </span>
               </div>
               <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono whitespace-nowrap">
-                {minDisplay}{range.min !== -999 ? range.min : range.max}
-                {range.max !== 999 && ` - ${range.max}`}
-                {maxDisplay}°C
+                {range.min === -999 ? (
+                  `< ${range.max}`
+                ) : range.max === 999 ? (
+                  `> ${range.min}`
+                ) : (
+                  `${range.min} - ${range.max}`
+                )}
+                °C
               </span>
             </div>
           );
