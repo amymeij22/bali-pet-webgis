@@ -170,11 +170,6 @@ export default function InstallPrompt() {
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  // Don't show if already installed
-  if (isStandalone) {
-    return null;
-  }
-
   // Auto-close after AUTO_CLOSE_DELAY (6 seconds) if not responded
   useEffect(() => {
     if (showPrompt) {
@@ -190,6 +185,11 @@ export default function InstallPrompt() {
       };
     }
   }, [showPrompt]);
+
+  // Don't show if already installed
+  if (isStandalone) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
