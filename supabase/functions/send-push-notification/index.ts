@@ -127,6 +127,18 @@ Deno.serve(async (req) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
+
+    // Jika eventType adalah UPDATE, pastikan is_latest berubah dari false menjadi true
+    if (eventType === 'UPDATE') {
+      const oldRecord = payload.old || payload.old_record;
+      if (oldRecord && oldRecord.is_latest === true) {
+        console.log('[Push Function] Batch was already latest (is_latest was true in old record), skipping notification');
+        return new Response(JSON.stringify({ message: 'Batch was already latest, skipped notification' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+    }
     
     console.log('[Push Function] Processing batch:', record.id);
     
