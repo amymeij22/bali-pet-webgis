@@ -124,12 +124,10 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
         animate={reduceMotion ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
         transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30, delay: 0.15 }}
         onClick={() => setIsMobileOpen(true)}
-        className="md:hidden fixed right-0 top-[calc(50%-28px)] z-30 w-9 h-12 rounded-l-xl bg-card border-l border-y border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
+        className="md:hidden fixed right-0 top-[calc(50%-45px)] z-30 w-8 h-[45px] rounded-tl-2xl bg-card border-l border-t border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
         aria-label={t('pet_view_legend_aria')}
       >
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-          <span className="text-[9px] font-bold text-primary-foreground">PET</span>
-        </div>
+        <span className="text-[10px] font-bold text-foreground select-none">PET</span>
       </motion.button>
 
       {/* Mobile: Overlay modal */}
@@ -140,7 +138,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
-            className="md:hidden fixed inset-0 z-50 flex items-start justify-end p-4 pt-28"
+            className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsMobileOpen(false);
             }}
@@ -160,12 +158,6 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
               className="relative z-10 map-control w-[200px]"
             >
-              <button
-                onClick={() => setIsMobileOpen(false)}
-                className="absolute -top-2 -right-2 p-1.5 rounded-full bg-card border border-border shadow-sm hover:bg-secondary/50 transition-colors"
-              >
-                <X className="w-3 h-3 text-muted-foreground" />
-              </button>
               <LegendContent />
             </motion.div>
           </motion.div>

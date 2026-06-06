@@ -54,10 +54,10 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
         animate={reduceMotion ? { x: 0, opacity: 1 } : { x: 0, opacity: 1 }}
         transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30, delay: 0.2 }}
         onClick={() => setIsOpen(true)}
-        className="md:hidden fixed right-0 top-[calc(50%+28px)] z-30 w-9 h-12 rounded-l-xl bg-card border-l border-y border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
+        className="md:hidden fixed right-0 top-[50%] z-30 w-8 h-[45px] rounded-bl-2xl bg-card border-l border-t border-b border-border shadow-sm flex items-center justify-center hover:bg-secondary/60 transition-colors pointer-events-auto"
         aria-label={t('view_data_sources')}
       >
-        <Info className="w-5 h-5 text-muted-foreground" />
+        <Info className="w-4 h-4 text-muted-foreground" />
       </motion.button>
 
       {/* Mobile: Overlay modal */}
@@ -67,7 +67,8 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 z-50 flex items-end justify-center p-4"
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
+            className="md:hidden fixed inset-0 z-50 flex items-center justify-center p-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) setIsOpen(false);
             }}
@@ -80,20 +81,14 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               onClick={() => setIsOpen(false)}
             />
             <motion.div
-              initial={reduceMotion ? false : { y: 100, opacity: 0 }}
-              animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative z-10 glass-panel rounded-xl px-4 py-4 w-full max-w-sm mb-4"
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.98 }}
+              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.14, ease: 'easeOut' }}
+              className="relative z-10 glass-panel rounded-xl px-4 py-4 w-full max-w-[280px]"
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-foreground">{t('data_sources')}</span>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1 rounded-lg hover:bg-secondary/50 transition-colors"
-                >
-                  <X className="w-4 h-4 text-muted-foreground" />
-                </button>
               </div>
               <ul className="text-xs text-muted-foreground space-y-2 leading-relaxed">
                 <li className="flex gap-2">
