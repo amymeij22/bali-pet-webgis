@@ -15,7 +15,7 @@ const DICTS: Record<Language, Dict> = {
     pet_standard_tropical: 'Tropis / Subtropis',
 
     time_produced: 'Waktu Produksi',
-    wita: 'WITA',
+    wita: 'WITA (UTC+8)',
     today: 'Hari Ini',
 
     // a11y / controls
@@ -109,7 +109,7 @@ const DICTS: Record<Language, Dict> = {
     pet_standard_tropical: 'Tropical / Subtropical',
 
     time_produced: 'Produced at',
-    wita: 'WITA',
+    wita: 'UTC+8 (WITA)',
     today: 'Today',
 
     // a11y / controls

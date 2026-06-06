@@ -85,7 +85,7 @@ export default function WeatherPopup({
       return {
         timeStr: format(witaDate, 'HH:mm'),
         dateStr: format(witaDate, 'dd/MM'),
-        fullTimeLabel: `${format(witaDate, 'dd/MM HH:mm')} WITA`,
+        fullTimeLabel: `${format(witaDate, 'dd/MM HH:mm')} ${t('wita')}`,
         pet: f.pet_value,
         temp: f.temperature,
         forecast: f,
