@@ -1,3 +1,13 @@
+// Disable all console logs in production environment based on APP_ENV / VITE_APP_ENV
+const appEnv = import.meta.env.APP_ENV || import.meta.env.VITE_APP_ENV;
+if (appEnv === "production") {
+  console.log = () => {};
+  console.warn = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+  console.error = () => {};
+}
+
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
