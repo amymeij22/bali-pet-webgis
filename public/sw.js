@@ -11,6 +11,7 @@ const PRECACHE_ASSETS = [
   '/manifest.json',
   '/favicon.ico',
   '/data/destinasi_wisata_bali.geojson',
+  '/image-fallback.webp',
 ];
 
 // ---------------------------------------------------------------------------

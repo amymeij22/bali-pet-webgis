@@ -157,8 +157,7 @@ export default function WeatherPopup({
   };
 
   // Fallback hero image (WEBP) kalau dari DB kosong / gagal load.
-  const HERO_FALLBACK_URL =
-    'https://images.unsplash.com/photo-1620894520977-1z2niibpg5a?auto=format&fit=crop&w=1200&q=80&fm=webp';
+  const HERO_FALLBACK_URL = '/image-fallback.webp';
   const desiredHeroSrcRaw = (heroImageUrl ?? '').trim();
   const desiredHeroSrc = useMemo(() => {
     const raw = desiredHeroSrcRaw;

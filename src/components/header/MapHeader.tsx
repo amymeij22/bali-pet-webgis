@@ -1,7 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import logoBmkg from "@/assets/logo-bmkg.webp";
-import logoStmkg from "@/assets/logo-stmkg.png";
-import logoInstrumentasi from "@/assets/logo-instrumentasi.png";
+import logoStmkg from "@/assets/logo-stmkg.webp";
+import logoInstrumentasi from "@/assets/logo-instrumentasi.webp";
 import { useI18n } from "@/lib/i18n";
 
 export default function MapHeader() {

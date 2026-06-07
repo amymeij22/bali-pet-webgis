@@ -55,8 +55,7 @@ describe('WeatherPopup hero image', () => {
     const img = document.querySelector('img');
     expect(img).toBeTruthy();
     fireEvent.error(img);
-    expect(img.getAttribute('src') ?? '').toContain('images.unsplash.com');
-    expect(img.getAttribute('src') ?? '').toContain('fm=webp');
+    expect(img.getAttribute('src') ?? '').toBe('/image-fallback.webp');
   });
 
   test('does not change hero when already using fallback', () => {
