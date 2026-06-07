@@ -20,6 +20,7 @@ export default function InstallPrompt() {
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
   const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -33,6 +34,29 @@ export default function InstallPrompt() {
     
     setIsStandalone(isStandaloneMode);
     console.log('[PWA] Standalone mode:', isStandaloneMode);
+
+    if (isStandaloneMode) {
+      localStorage.setItem('pwa-installed', 'true');
+      setIsInstalled(true);
+    } else {
+      // Check local storage for installation state
+      if (localStorage.getItem('pwa-installed') === 'true') {
+        setIsInstalled(true);
+      }
+
+      // Check using navigator.getInstalledRelatedApps (Chromium browsers)
+      if ('getInstalledRelatedApps' in navigator) {
+        (navigator as any).getInstalledRelatedApps().then((relatedApps: any[]) => {
+          console.log('[PWA] Related apps checked:', relatedApps);
+          if (relatedApps && relatedApps.length > 0) {
+            setIsInstalled(true);
+            localStorage.setItem('pwa-installed', 'true');
+          }
+        }).catch((err: any) => {
+          console.warn('[PWA] Error checking getInstalledRelatedApps:', err);
+        });
+      }
+    }
 
     // Check if mobile
     const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -63,21 +87,33 @@ export default function InstallPrompt() {
       
       // Show prompt after 15 seconds (user sudah lihat konten)
       setTimeout(() => {
-        if (!isStandaloneMode) {
+        // Hanya tampilkan jika belum dalam standalone mode dan belum terinstall
+        const alreadyInstalled = localStorage.getItem('pwa-installed') === 'true';
+        if (!isStandaloneMode && !alreadyInstalled) {
           console.log('[PWA] Showing install prompt');
           setShowPrompt(true);
         }
       }, INSTALL_PROMPT_DELAY);
     };
 
+    // Listen to appinstalled event
+    const handleAppInstalled = () => {
+      console.log('[PWA] App installed event received');
+      setIsInstalled(true);
+      localStorage.setItem('pwa-installed', 'true');
+      setShowPrompt(false);
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     // For mobile devices, show prompt even if beforeinstallprompt doesn't fire
     // (some browsers/devices don't fire this event immediately)
     if (mobile && !isStandaloneMode && !iOS) {
-      // Check if user already dismissed (localStorage)
+      // Check if user already dismissed (localStorage) or already installed
       const dismissed = localStorage.getItem('pwa-install-dismissed');
-      let shouldShow = true;
+      const alreadyInstalled = localStorage.getItem('pwa-installed') === 'true';
+      let shouldShow = !alreadyInstalled;
 
       if (dismissed) {
         const dismissedTime = parseInt(dismissed, 10);
@@ -93,8 +129,11 @@ export default function InstallPrompt() {
       // (user can manually install via browser menu)
       if (shouldShow) {
         setTimeout(() => {
-          console.log('[PWA] Showing manual install prompt for mobile');
-          setShowPrompt(true);
+          const checkInstalledAgain = localStorage.getItem('pwa-installed') === 'true';
+          if (!checkInstalledAgain) {
+            console.log('[PWA] Showing manual install prompt for mobile');
+            setShowPrompt(true);
+          }
         }, INSTALL_PROMPT_DELAY);
       }
     }
@@ -102,16 +141,21 @@ export default function InstallPrompt() {
     // For iOS, always show instructions after delay
     if (iOS && !isStandaloneMode) {
       const dismissed = localStorage.getItem('pwa-install-dismissed');
-      if (!dismissed) {
+      const alreadyInstalled = localStorage.getItem('pwa-installed') === 'true';
+      if (!dismissed && !alreadyInstalled) {
         setTimeout(() => {
-          console.log('[PWA] Showing iOS install prompt');
-          setShowPrompt(true);
+          const checkInstalledAgain = localStorage.getItem('pwa-installed') === 'true';
+          if (!checkInstalledAgain) {
+            console.log('[PWA] Showing iOS install prompt');
+            setShowPrompt(true);
+          }
         }, INSTALL_PROMPT_DELAY);
       }
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
@@ -130,6 +174,8 @@ export default function InstallPrompt() {
 
         if (outcome === 'accepted') {
           console.log('[PWA] User accepted install prompt');
+          setIsInstalled(true);
+          localStorage.setItem('pwa-installed', 'true');
           setShowPrompt(false);
         } else {
           console.log('[PWA] User dismissed install prompt');
@@ -187,7 +233,7 @@ export default function InstallPrompt() {
   }, [showPrompt]);
 
   // Don't show if already installed
-  if (isStandalone) {
+  if (isStandalone || isInstalled) {
     return null;
   }
 

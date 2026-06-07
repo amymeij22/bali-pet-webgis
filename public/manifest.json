@@ -97,5 +97,12 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "/manifest.json"
+    }
+  ]
 }
