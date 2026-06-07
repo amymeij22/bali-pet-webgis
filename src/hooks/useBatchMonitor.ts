@@ -40,6 +40,10 @@ export function useBatchMonitor(
             if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
               const newBatch = payload.new as ForecastBatch;
 
+              if (!newBatch.is_latest) {
+                return;
+              }
+
               if (lastNotifiedBatchIdRef.current === newBatch.id) {
                 return;
               }

@@ -372,20 +372,32 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  const broadcastPromise = self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'NEW_BATCH_NOTIFICATION',
+        batchId: notificationData.data.batchId,
+      });
+    });
+  });
+
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, {
-      body: notificationData.body,
-      icon: notificationData.icon,
-      badge: notificationData.badge,
-      tag: notificationData.tag,
-      data: notificationData.data,
-      requireInteraction: notificationData.requireInteraction,
-      vibrate: [200, 100, 200],
-      actions: [
-        { action: 'open', title: 'Buka Aplikasi' },
-        { action: 'close', title: 'Tutup' },
-      ],
-    })
+    Promise.all([
+      self.registration.showNotification(notificationData.title, {
+        body: notificationData.body,
+        icon: notificationData.icon,
+        badge: notificationData.badge,
+        tag: notificationData.tag,
+        data: notificationData.data,
+        requireInteraction: notificationData.requireInteraction,
+        vibrate: [200, 100, 200],
+        actions: [
+          { action: 'open', title: 'Buka Aplikasi' },
+          { action: 'close', title: 'Tutup' },
+        ],
+      }),
+      broadcastPromise
+    ])
   );
 });
 
@@ -399,12 +411,23 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'close') return;
 
   const urlToOpen = event.notification.data?.url || '/';
+  const batchId = event.notification.data?.batchId;
+
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
         for (const client of clientList) {
-          if (client.url === urlToOpen && 'focus' in client) {
+          const clientUrl = new URL(client.url, self.location.origin).pathname;
+          const targetUrl = new URL(urlToOpen, self.location.origin).pathname;
+          
+          if (clientUrl === targetUrl && 'focus' in client) {
+            if (batchId) {
+              client.postMessage({
+                type: 'NEW_BATCH_NOTIFICATION',
+                batchId: batchId,
+              });
+            }
             return client.focus();
           }
         }

@@ -202,6 +202,37 @@ const Index = () => {
     };
   }, [currentBatchId, loadBatchForecasts]);
 
+  // Listen for messages from the Service Worker (e.g., background push or notification click updates)
+  useEffect(() => {
+    const handleServiceWorkerMessage = async (event: MessageEvent) => {
+      if (event.data && event.data.type === 'NEW_BATCH_NOTIFICATION') {
+        const batchId = event.data.batchId;
+        console.log('[Index] Received SW message for new PWA batch:', batchId);
+        if (batchId && batchId !== currentBatchId) {
+          try {
+            const latest = await getLatestBatch();
+            if (latest) {
+              console.log('[Index] Auto-updating weather forecasts for new batch:', latest.id);
+              await loadBatchForecasts(latest);
+            }
+          } catch (err) {
+            console.error('[Index] Failed to auto-update forecasts from SW message:', err);
+          }
+        }
+      }
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    }
+
+    return () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+      }
+    };
+  }, [currentBatchId, loadBatchForecasts]);
+
   // Handle new batch detected via Supabase Realtime
   const handleNewBatch = useCallback(async (batch: ForecastBatch) => {
     console.log('[Index] New batch detected, reloading data...', batch.id);
