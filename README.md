@@ -84,7 +84,11 @@ webgis/
   - **Sinkronisasi Waktu Interaktif**: Klik pada titik mana pun di grafik tren untuk menyelaraskan jam aktif dasbor dan peta.
 - **Toleransi Waktu (Fuzzy Matching)**: Penanganan data BMKG otomatis dengan pencarian jam terdekat berbasis batas toleransi ±90 menit (`NEAREST_TOLERANCE_MS`).
 - **Sidebar Destinasi**: Dilengkapi pencarian nama, pintasan sorot ke peta, serta pengelompokan per wilayah kabupaten/kecamatan.
-- **PWA & Offline Caching**: Dukungan instalasi aplikasi langsung dari browser, manifest, dan service worker siap pakai (*production-ready*).
+- **PWA & Offline Caching (Production-Ready)**:
+  - Dukungan instalasi aplikasi langsung dari browser, manifest, dan service worker.
+  - **PWA Auto-Update Real-time**: Service worker mendeteksi notifikasi push batch data cuaca baru (`NEW_BATCH_NOTIFICATION`) dan secara otomatis memicu refresh data di latar belakang pada halaman dasbor tanpa memerlukan refresh browser manual oleh pengguna.
+  - **Dukungan Rerun Dinamis (Run 2/3)**: Membandingkan timestamp `updated_at` untuk mendeteksi eksekusi ulang pada batch yang sama secara dinamis.
+- **Optimasi Produksi (Zero Logs)**: Menonaktifkan log konsol browser di lingkungan produksi untuk privasi dan kinerja aplikasi yang optimal.
 - **Push Notification**: Berlangganan notifikasi otomatis saat batch data prakiraan cuaca baru selesai diproduksi oleh backend.
 
 ---
