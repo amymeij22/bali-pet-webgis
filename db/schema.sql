@@ -124,7 +124,8 @@
     is_latest BOOLEAN NOT NULL DEFAULT FALSE,
     forecast_start TIMESTAMPTZ NOT NULL,
     forecast_end TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
 
   -- Only one "latest" batch at any time

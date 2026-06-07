@@ -39,6 +39,7 @@ const Index = () => {
   const [times, setTimes] = useState<string[]>([]);
   const [producedAt, setProducedAt] = useState<string | null>(null);
   const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
+  const [currentBatchUpdatedAt, setCurrentBatchUpdatedAt] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   // Destinations for sidebar (flat list - 49 destinasi)
   const [destinations, setDestinations] = useState<Array<{ 
@@ -63,6 +64,7 @@ const Index = () => {
     setTimes([]);
     setSelectedTime('');
     setProducedAt(null);
+    setCurrentBatchUpdatedAt(null);
     setForecastListsByDestination(new Map());
     setDestinationChoropleth(new Map());
     setChoropleth(new Map());
@@ -73,8 +75,9 @@ const Index = () => {
     async (batch: ForecastBatch) => {
       const seq = ++loadSeqRef.current;
 
-      // Set batch id segera agar monitor tidak re-trigger untuk batch yang sama
+      // Set batch id & updated_at segera agar monitor tidak re-trigger untuk batch/update yang sama
       setCurrentBatchId(batch.id);
+      setCurrentBatchUpdatedAt(batch.updated_at ?? null);
 
       // Reset cache dinamis sebelum fetch (best practice: selalu rebuild dari latest batch)
       resetDynamicState();
@@ -207,17 +210,19 @@ const Index = () => {
     const handleServiceWorkerMessage = async (event: MessageEvent) => {
       if (event.data && event.data.type === 'NEW_BATCH_NOTIFICATION') {
         const batchId = event.data.batchId;
-        console.log('[Index] Received SW message for new PWA batch:', batchId);
-        if (batchId && batchId !== currentBatchId) {
-          try {
-            const latest = await getLatestBatch();
-            if (latest) {
-              console.log('[Index] Auto-updating weather forecasts for new batch:', latest.id);
+        console.log('[Index] Received SW message for PWA batch/update:', batchId);
+        try {
+          const latest = await getLatestBatch();
+          if (latest) {
+            const isSameBatch = latest.id === currentBatchId;
+            const isSameUpdate = latest.updated_at === currentBatchUpdatedAt;
+            if (!isSameBatch || !isSameUpdate) {
+              console.log('[Index] SW triggered auto-updating weather forecasts for batch:', latest.id, latest.updated_at);
               await loadBatchForecasts(latest);
             }
-          } catch (err) {
-            console.error('[Index] Failed to auto-update forecasts from SW message:', err);
           }
+        } catch (err) {
+          console.error('[Index] Failed to auto-update forecasts from SW message:', err);
         }
       }
     };
@@ -231,16 +236,16 @@ const Index = () => {
         navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
       }
     };
-  }, [currentBatchId, loadBatchForecasts]);
+  }, [currentBatchId, currentBatchUpdatedAt, loadBatchForecasts]);
 
   // Handle new batch detected via Supabase Realtime
   const handleNewBatch = useCallback(async (batch: ForecastBatch) => {
-    console.log('[Index] New batch detected, reloading data...', batch.id);
+    console.log('[Index] New batch/update detected, reloading data...', batch.id);
     await loadBatchForecasts(batch);
   }, [loadBatchForecasts]);
 
   // Monitor for new batches (triggers push notification)
-  useBatchMonitor(currentBatchId, handleNewBatch);
+  useBatchMonitor(currentBatchId, currentBatchUpdatedAt, handleNewBatch);
 
   // Derive choropleth (destinasi + peta per-desa) dengan strategi nearest-time per destinasi
   useEffect(() => {

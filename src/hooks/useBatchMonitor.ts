@@ -9,10 +9,12 @@ import { getCurrentSubscription } from '@/lib/pushNotification';
  */
 export function useBatchMonitor(
   currentBatchId: string | null,
+  currentBatchUpdatedAt: string | null,
   onNewBatch?: (batch: ForecastBatch) => void
 ) {
   const channelRef = useRef<any>(null);
   const lastNotifiedBatchIdRef = useRef<string | null>(null);
+  const lastNotifiedBatchUpdatedAtRef = useRef<string | null>(null);
 
   useEffect(() => {
     const subscribe = () => {
@@ -44,16 +46,18 @@ export function useBatchMonitor(
                 return;
               }
 
-              if (lastNotifiedBatchIdRef.current === newBatch.id) {
+              // Check if same batch AND same update timestamp
+              const isSameBatch = currentBatchId === newBatch.id;
+              const isSameUpdate = currentBatchUpdatedAt === newBatch.updated_at ||
+                (newBatch.updated_at && lastNotifiedBatchUpdatedAtRef.current === newBatch.updated_at);
+
+              if (isSameBatch && isSameUpdate) {
                 return;
               }
 
-              if (currentBatchId === newBatch.id) {
-                return;
-              }
-
-              console.log('[BatchMonitor] New batch detected:', newBatch.id);
+              console.log('[BatchMonitor] New batch/update detected:', newBatch.id, newBatch.updated_at);
               lastNotifiedBatchIdRef.current = newBatch.id;
+              lastNotifiedBatchUpdatedAtRef.current = newBatch.updated_at ?? null;
 
               if (onNewBatch) {
                 onNewBatch(newBatch);
@@ -95,25 +99,34 @@ export function useBatchMonitor(
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [currentBatchId, onNewBatch]);
+  }, [currentBatchId, currentBatchUpdatedAt, onNewBatch]);
 
-  // Check for new batch on mount (fallback if Realtime doesn't work)
+  // Check for new batch/update on mount (fallback if Realtime doesn't work)
   useEffect(() => {
     const checkForNewBatch = async () => {
       if (!navigator.onLine) return; // Skip if offline to avoid console log errors
       try {
         const latest = await getLatestBatch();
-        if (latest && latest.id !== currentBatchId) {
-          console.log('[BatchMonitor] New batch found on initial check:', latest.id);
-          
-          if (lastNotifiedBatchIdRef.current !== latest.id) {
-            lastNotifiedBatchIdRef.current = latest.id;
+        if (latest) {
+          const isSameBatch = latest.id === currentBatchId;
+          const isSameUpdate = latest.updated_at === currentBatchUpdatedAt;
+
+          if (!isSameBatch || !isSameUpdate) {
+            console.log('[BatchMonitor] New batch/update found on initial check:', latest.id, latest.updated_at);
             
-            if (onNewBatch) {
-              onNewBatch(latest);
+            const isAlreadyNotified = lastNotifiedBatchIdRef.current === latest.id &&
+              lastNotifiedBatchUpdatedAtRef.current === latest.updated_at;
+
+            if (!isAlreadyNotified) {
+              lastNotifiedBatchIdRef.current = latest.id;
+              lastNotifiedBatchUpdatedAtRef.current = latest.updated_at ?? null;
+
+              if (onNewBatch) {
+                onNewBatch(latest);
+              }
+
+              await showLocalNotification(latest);
             }
-            
-            await showLocalNotification(latest);
           }
         }
       } catch (error) {
@@ -125,7 +138,7 @@ export function useBatchMonitor(
     const timeout = setTimeout(checkForNewBatch, 5000);
 
     return () => clearTimeout(timeout);
-  }, [currentBatchId, onNewBatch]);
+  }, [currentBatchId, currentBatchUpdatedAt, onNewBatch]);
 }
 
 /**

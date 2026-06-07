@@ -14,6 +14,7 @@ export interface ForecastBatch {
   is_latest: boolean;
   forecast_start: string;
   forecast_end: string;
+  updated_at?: string;
   created_at?: string;
 }
 
@@ -69,7 +70,7 @@ export interface WeatherForecast {
 export async function getLatestBatch(): Promise<ForecastBatch | null> {
   const { data, error } = await supabase
     .from('forecast_batches')
-    .select('id, produced_at, is_latest, forecast_start, forecast_end')
+    .select('id, produced_at, is_latest, forecast_start, forecast_end, updated_at')
     .eq('is_latest', true)
     .limit(1)
     .maybeSingle();
