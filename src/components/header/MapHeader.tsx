@@ -1,5 +1,4 @@
 import { motion, useReducedMotion } from "framer-motion";
-import logoBmkg from "@/assets/logo-bmkg.webp";
 import logoStmkg from "@/assets/logo-stmkg.webp";
 import logoInstrumentasi from "@/assets/logo-instrumentasi.webp";
 import { useI18n } from "@/lib/i18n";
@@ -8,7 +7,6 @@ export default function MapHeader() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
   const logos = [
-    { src: logoBmkg, alt: "Logo BMKG" },
     { src: logoStmkg, alt: "Logo STMKG" },
     { src: logoInstrumentasi, alt: "Logo Instrumentasi" },
   ];
