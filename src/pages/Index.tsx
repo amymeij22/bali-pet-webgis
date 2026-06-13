@@ -90,7 +90,21 @@ const Index = () => {
 
         const sortedTimes = buildSliderTimes(allForecasts);
         setTimes(sortedTimes);
-        setSelectedTime(sortedTimes[0] ?? '');
+        
+        // Default ke waktu prakiraan terdekat dengan waktu saat ini (best practice)
+        let defaultTime = sortedTimes[0] ?? '';
+        if (sortedTimes.length > 0) {
+          const nowMs = Date.now();
+          let minDiff = Infinity;
+          for (const t of sortedTimes) {
+            const diff = Math.abs(new Date(t).getTime() - nowMs);
+            if (diff < minDiff) {
+              minDiff = diff;
+              defaultTime = t;
+            }
+          }
+        }
+        setSelectedTime(defaultTime);
 
         const lists = new Map<string, WeatherForecast[]>();
         allForecasts.forEach((f) => {
