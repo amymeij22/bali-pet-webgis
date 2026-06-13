@@ -1,8 +1,8 @@
-const CACHE_NAME = 'bali-pet-v2';
-const RUNTIME_CACHE = 'bali-pet-runtime-v2';
+const CACHE_NAME = 'bali-pet-v3';
+const RUNTIME_CACHE = 'bali-pet-runtime-v3';
 // Cache terpisah untuk data API Supabase (agar mudah di-manage & tidak tercampur asset)
-const API_CACHE = 'bali-pet-api-v2';
-const IMAGE_CACHE = 'bali-pet-images-v2';
+const API_CACHE = 'bali-pet-api-v3';
+const IMAGE_CACHE = 'bali-pet-images-v3';
 
 // HANYA precache resource STABIL (tidak berubah nama setiap build)
 // JANGAN masukkan asset hashed (index-XYZ.js) → SW gagal install karena file lama tidak ada
