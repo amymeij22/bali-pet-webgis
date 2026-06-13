@@ -35,13 +35,10 @@ export default function MapHeader() {
       {/* Title */}
       <div className="glass-panel rounded-xl px-4 sm:px-6 py-2 pointer-events-auto max-w-[92vw] sm:max-w-[720px]">
         <h1 className="text-[11px] sm:text-sm md:text-base font-semibold text-foreground text-center leading-snug">
-          {/* Baris 1 */}
-          <span className="block">
+          <span className="inline sm:block">
             {t('thermal_comfort_title_line1')}
-          </span>
-
-          {/* Baris 2 */}
-          <span className="block">
+          </span>{' '}
+          <span className="inline sm:block">
             {t('thermal_comfort_title_line2')}
           </span>
         </h1>
