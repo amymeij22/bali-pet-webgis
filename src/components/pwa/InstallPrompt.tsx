@@ -245,7 +245,7 @@ export default function InstallPrompt() {
           animate={reduceMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed bottom-4 left-4 right-4 z-[35] xl:left-auto xl:right-4 xl:w-96 pointer-events-auto"
+          className="fixed bottom-4 left-4 right-4 z-[35] sm:left-auto sm:right-4 sm:w-96 pointer-events-auto"
         >
           <div className="glass-panel rounded-xl p-4 shadow-lg border border-border">
             {/* Header Row: Icon + Title */}

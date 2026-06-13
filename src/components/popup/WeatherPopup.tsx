@@ -110,7 +110,7 @@ export default function WeatherPopup({
           </div>
           <div className="flex items-center justify-between gap-4 mt-1">
             <span>{t('popup_weather_temp')}:</span>
-            <span className="font-bold font-mono text-sm text-sky-500">{data.temp.toFixed(1)}°C</span>
+            <span className="font-bold font-mono text-sm text-foreground">{data.temp.toFixed(1)}°C</span>
           </div>
           <div className="flex items-center justify-between gap-4 mt-1">
             <span>Status:</span>
