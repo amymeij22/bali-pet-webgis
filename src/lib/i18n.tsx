@@ -57,8 +57,9 @@ const DICTS: Record<Language, Dict> = {
     close: 'Tutup',
 
     thermal_comfort_title_line1:
-      'Prediksi Kenyamanan Termal Berbasis Indeks Physiological Equivalent Temperature',
-    thermal_comfort_title_line2: 'untuk Destinasi Wisata di Provinsi Bali',
+      'Peta Prediksi Kenyamanan Termal Destinasi Wisata di Provinsi Bali',
+    thermal_comfort_title_line2:
+      'Berdasarkan Indeks Physiological Equivalent Temperature (PET)',
 
     popup_thermal_comfort: 'Kenyamanan Termal (PET)',
     popup_destinations_title: 'Destinasi Wisata',
@@ -150,8 +151,9 @@ const DICTS: Record<Language, Dict> = {
     close: 'Close',
 
     thermal_comfort_title_line1:
-      'Thermal Comfort Forecast Based on the Physiological Equivalent Temperature Index',
-    thermal_comfort_title_line2: 'for Tourist Destinations in Bali Province',
+      'Thermal Comfort Forecast Map for Tourist Destinations in Bali Province',
+    thermal_comfort_title_line2:
+      'Based on the Physiological Equivalent Temperature (PET) Index',
 
     popup_thermal_comfort: 'Thermal Comfort (PET)',
     popup_destinations_title: 'Tourist destination',
