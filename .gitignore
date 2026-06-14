@@ -36,3 +36,6 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# Local Project documentation
+project-summary.md
