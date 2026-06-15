@@ -139,8 +139,8 @@ const DICTS: Record<Language, Dict> = {
     data_source_kemendagri:
       'Codes, administrative areas data, and islands from the Ministry of Home Affairs',
 
-    destinations_header: 'Tourist destinations',
-    destinations_count_suffix: 'tourist locations in Bali',
+    destinations_header: 'Tourism destinations',
+    destinations_count_suffix: 'tourism locations in Bali',
     destinations_footer_hint: 'Click a destination to view details',
     destinations_toggle: 'DESTINATIONS',
     destinations_search_placeholder: 'Search destinations...',
@@ -151,13 +151,13 @@ const DICTS: Record<Language, Dict> = {
     close: 'Close',
 
     thermal_comfort_title_line1:
-      'Thermal Comfort Forecast Map for Tourist Destinations in Bali Province',
+      'Thermal Comfort Forecast Map for Tourism Destinations in Bali Province',
     thermal_comfort_title_line2:
       'Based on the Physiological Equivalent Temperature (PET) Index',
 
     popup_thermal_comfort: 'Thermal Comfort (PET)',
-    popup_destinations_title: 'Tourist destination',
-    popup_select_destination_aria: 'Select tourist destination',
+    popup_destinations_title: 'Tourism destination',
+    popup_select_destination_aria: 'Select tourism destination',
     popup_close_aria: 'Close',
     popup_prev_time_aria: 'Previous time',
     popup_next_time_aria: 'Next time',
