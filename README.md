@@ -5,7 +5,7 @@ Aplikasi WebGIS interaktif untuk memvisualisasikan prediksi **kenyamanan termal*
 [![React](https://img.shields.io/badge/React-18.3-blue?logo=react)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://typescriptlang.org)
-[![Vitest](https://img.shields.io/badge/Tests-58%20Passed-green?logo=vitest)](https://vitest.dev)
+[![Vitest](https://img.shields.io/badge/Tests-61%20Passed-green?logo=vitest)](https://vitest.dev)
 [![Playwright](https://img.shields.io/badge/E2E-4%20Passed-green?logo=playwright)](https://playwright.dev)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](#)
 
