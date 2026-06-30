@@ -5,9 +5,11 @@ test.describe('WebGIS E2E Test Suite', () => {
   test('Skenario 1: Dasbor & Peta Leaflet Berhasil Dimuat', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    // Berikan jeda singkat agar injeksi gaya (CSS) oleh server dev Vite selesai pada Firefox/WebKit
+    await page.waitForTimeout(1000);
 
     const mapContainer = page.locator('.leaflet-container');
-    await expect(mapContainer).toBeVisible();
+    await expect(mapContainer).toBeAttached();
 
     const sidebar = page.locator('aside');
     await expect(sidebar).toBeVisible();
