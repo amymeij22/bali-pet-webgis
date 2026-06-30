@@ -13,7 +13,10 @@ export default function LanguageSelector() {
         if (v === 'id' || v === 'en') setLang(v satisfies Language);
       }}
     >
-      <SelectTrigger className="h-7 w-[110px] px-2 text-[10px] sm:text-xs">
+      <SelectTrigger 
+        className="h-7 w-[110px] px-2 text-[10px] sm:text-xs"
+        aria-label={t('language_select_aria')}
+      >
         <div className="flex items-center gap-1.5">
           <Languages className="w-3.5 h-3.5 text-muted-foreground" />
           <SelectValue />

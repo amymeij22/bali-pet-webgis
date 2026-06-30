@@ -27,6 +27,9 @@ const DICTS: Record<Language, Dict> = {
     pet_info_aria: 'Informasi tentang PET',
     pet_view_legend_aria: 'Lihat legenda PET',
     faq_title: 'Pertanyaan Umum (FAQ)',
+    language_select_aria: 'Pilih bahasa',
+    pet_standard_aria: 'Pilih standar PET',
+    time_slider_aria: 'Geser waktu prakiraan',
 
     // PWA install prompt
     pwa_install_title: 'Install Aplikasi',
@@ -122,6 +125,9 @@ const DICTS: Record<Language, Dict> = {
     pet_info_aria: 'About PET',
     pet_view_legend_aria: 'View PET legend',
     faq_title: 'Frequently Asked Questions (FAQ)',
+    language_select_aria: 'Select language',
+    pet_standard_aria: 'Select PET standard',
+    time_slider_aria: 'Slide forecast time',
 
     // PWA install prompt
     pwa_install_title: 'Install app',

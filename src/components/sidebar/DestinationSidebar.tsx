@@ -159,69 +159,77 @@ export default function DestinationSidebar({
 
           {/* List */}
           <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
-            {groupedData.map((g) => (
-              <div key={g.key} className="mb-2 last:mb-0">
-                {g.title ? (
-                  <div className="px-2 pt-2 pb-1 text-[10px] sm:text-xs font-medium text-muted-foreground">
-                    {g.title}
-                  </div>
-                ) : null}
-
-                {g.items.map((destination) => {
-                  const forecast = destinationChoropleth.get(destination.id);
-                  const isActive =
-                    activeDestinationId === destination.id || activeVillage === destination.village_id;
-
-                  let category: string | null = null;
-                  if (forecast) category = classifyPet(forecast.pet_value, petStandard);
-
-                  return (
-                    <button
-                      key={destination.id}
-                      ref={(el) => {
-                        itemRefs.current.set(destination.id, el);
-                      }}
-                      onClick={() =>
-                        onDestinationClick(
-                          destination.village_id,
-                          destination.destination_name,
-                          destination.village_name
-                        )
-                      }
-                      className={cn(
-                        'destination-item w-full flex items-center justify-between gap-2 p-2 rounded-lg text-left',
-                        isActive && 'active'
-                      )}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{
-                            backgroundColor: category
-                              ? PET_COLORS[category as keyof typeof PET_COLORS]
-                              : '#ccc',
-                          }}
-                        />
-                        <span className="truncate text-xs sm:text-sm font-medium">
-                          {destination.destination_name}
-                        </span>
-                      </div>
-
-                      {forecast ? (
-                        <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
-                          <Thermometer className="w-3 h-3" />
-                          <span className="font-mono">{forecast.pet_value}°</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground/60 flex-shrink-0">
-                          <span className="text-[9px]">{t('not_available')}</span>
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
+            {destinations.length === 0 ? (
+              <div className="space-y-2 animate-pulse" data-testid="sidebar-shimmer">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="h-8 bg-secondary/60 rounded-lg w-full" />
+                ))}
               </div>
-            ))}
+            ) : (
+              groupedData.map((g) => (
+                <div key={g.key} className="mb-2 last:mb-0">
+                  {g.title ? (
+                    <div className="px-2 pt-2 pb-1 text-[10px] sm:text-xs font-medium text-muted-foreground">
+                      {g.title}
+                    </div>
+                  ) : null}
+
+                  {g.items.map((destination) => {
+                    const forecast = destinationChoropleth.get(destination.id);
+                    const isActive =
+                      activeDestinationId === destination.id || activeVillage === destination.village_id;
+
+                    let category: string | null = null;
+                    if (forecast) category = classifyPet(forecast.pet_value, petStandard);
+
+                    return (
+                      <button
+                        key={destination.id}
+                        ref={(el) => {
+                          itemRefs.current.set(destination.id, el);
+                        }}
+                        onClick={() =>
+                          onDestinationClick(
+                            destination.village_id,
+                            destination.destination_name,
+                            destination.village_name
+                          )
+                        }
+                        className={cn(
+                          'destination-item w-full flex items-center justify-between gap-2 p-2 rounded-lg text-left',
+                          isActive && 'active'
+                        )}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="w-3 h-3 rounded-full flex-shrink-0"
+                            style={{
+                              backgroundColor: category
+                                ? PET_COLORS[category as keyof typeof PET_COLORS]
+                                : '#ccc',
+                            }}
+                          />
+                          <span className="truncate text-xs sm:text-sm font-medium">
+                            {destination.destination_name}
+                          </span>
+                        </div>
+
+                        {forecast ? (
+                          <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground flex-shrink-0">
+                            <Thermometer className="w-3 h-3" />
+                            <span className="font-mono">{forecast.pet_value}°</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground/60 flex-shrink-0">
+                            <span className="text-[9px]">{t('not_available')}</span>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ))
+            )}
           </div>
 
           {/* Footer */}

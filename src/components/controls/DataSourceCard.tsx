@@ -27,7 +27,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-semibold text-foreground">{t('data_sources')}</span>
           </div>
-          <ul className="text-[10px] text-muted-foreground space-y-1.5 leading-relaxed">
+          <ul className="text-[10px] text-foreground/80 space-y-1.5 leading-relaxed">
             <li className="flex gap-1.5">
               <span className="text-primary">•</span>
               <span>{t('data_source_bmkg')}</span>
@@ -90,7 +90,7 @@ export default function DataSourceCard({ className }: DataSourceCardProps) {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-semibold text-foreground">{t('data_sources')}</span>
               </div>
-              <ul className="text-xs text-muted-foreground space-y-2 leading-relaxed">
+              <ul className="text-xs text-foreground/80 space-y-2 leading-relaxed">
                 <li className="flex gap-2">
                   <span className="text-primary">•</span>
                   <span>{t('data_source_bmkg')}</span>

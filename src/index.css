@@ -245,6 +245,11 @@
   .leaflet-control-attribution {
     @apply bg-card/80 text-muted-foreground text-xs backdrop-blur-sm;
   }
+
+  .leaflet-control-attribution a {
+    color: hsl(var(--foreground) / 0.8) !important;
+    font-weight: 500;
+  }
 }
 
 /* Animations */

@@ -155,6 +155,7 @@ export default function TimeSlider({ selectedTime, times, producedAt, isPlaying,
           </Button>
 
           <Slider
+            aria-label={t('time_slider_aria')}
             value={hasData ? [Math.max(0, currentIndex)] : [0]}
             min={0}
             max={Math.max(0, times.length - 1)}

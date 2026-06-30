@@ -63,7 +63,10 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
 
       {/* Standard Selector */}
       <Select value={standard} onValueChange={(v) => onStandardChange(v as PETStandard)}>
-        <SelectTrigger className="w-full h-8 text-xs mb-3">
+        <SelectTrigger 
+          className="w-full h-8 text-xs mb-3"
+          aria-label={t('pet_standard_aria')}
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent align="center" className="w-[var(--radix-select-trigger-width)]">
@@ -89,7 +92,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
                   {lang === 'en' ? range.label : range.labelId}
                 </span>
               </div>
-              <span className="text-[9px] sm:text-[10px] text-muted-foreground font-mono whitespace-nowrap">
+              <span className="text-[9px] sm:text-[10px] text-foreground/80 font-mono whitespace-nowrap">
                 {range.min === -999 ? (
                   `< ${range.max}`
                 ) : range.max === 999 ? (
