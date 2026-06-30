@@ -26,7 +26,7 @@ test.describe('WebGIS E2E Test Suite', () => {
     const englishOption = page.locator('role=option[name="English"]');
     await englishOption.click();
 
-    const destHeaderEn = page.locator('h2:has-text("Tourist destinations")');
+    const destHeaderEn = page.locator('h2:has-text("Tourism destinations")');
     await expect(destHeaderEn).toBeVisible();
 
     await langSelect.click();
