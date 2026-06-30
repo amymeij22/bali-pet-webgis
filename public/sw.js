@@ -1,8 +1,8 @@
-const CACHE_NAME = 'bali-pet-v1';
-const RUNTIME_CACHE = 'bali-pet-runtime-v1';
+const CACHE_NAME = 'bali-pet-v2';
+const RUNTIME_CACHE = 'bali-pet-runtime-v2';
 // Cache terpisah untuk data API Supabase (agar mudah di-manage & tidak tercampur asset)
-const API_CACHE = 'bali-pet-api-v1';
-const IMAGE_CACHE = 'bali-pet-images-v1';
+const API_CACHE = 'bali-pet-api-v2';
+const IMAGE_CACHE = 'bali-pet-images-v2';
 
 // HANYA precache resource STABIL (tidak berubah nama setiap build)
 // JANGAN masukkan asset hashed (index-XYZ.js) → SW gagal install karena file lama tidak ada
@@ -12,6 +12,7 @@ const PRECACHE_ASSETS = [
   '/favicon.ico',
   '/data/destinasi_wisata_bali.geojson',
   '/image-fallback.webp',
+  '/icons/logo-splash.webp',
 ];
 
 // ---------------------------------------------------------------------------
