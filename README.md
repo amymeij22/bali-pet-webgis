@@ -1,12 +1,15 @@
 # Bali PET WebGIS
 
-Aplikasi WebGIS interaktif untuk memvisualisasikan prediksi **kenyamanan termal** di berbagai destinasi wisata Bali. Kenyamanan termal dihitung berdasarkan indeks **Physiological Equivalent Temperature (PET)** menggunakan data cuaca historis dan prakiraan.
+Aplikasi WebGIS interaktif berbasis PWA (*Progressive Web App*) untuk memvisualisasikan prediksi **kenyamanan termal** di berbagai destinasi wisata Provinsi Bali. Kenyamanan termal dihitung secara spasial dan temporal berdasarkan indeks **Physiological Equivalent Temperature (PET)** menggunakan integrasi data cuaca dari BMKG dan database Supabase.
 
-[![React](https://img.shields.io/badge/React-18.3-blue?logo=react)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://typescriptlang.org)
-[![Vitest](https://img.shields.io/badge/Tests-61%20Passed-green?logo=vitest)](https://vitest.dev)
-[![Playwright](https://img.shields.io/badge/E2E-15%20Passed-green?logo=playwright)](https://playwright.dev)
+Proyek ini dikembangkan sebagai bagian dari penelitian Tugas Akhir (Skripsi) di **Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG)**.
+
+[![React](https://img.shields.io/badge/React-18.3-blue?logo=react&logoColor=white)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite&logoColor=white)](https://vite.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Vitest](https://img.shields.io/badge/Vitest-61%20Passed-green?logo=vitest&logoColor=white)](https://vitest.dev)
+[![Playwright](https://img.shields.io/badge/Playwright-15%20Passed-green?logo=playwright&logoColor=white)](https://playwright.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](#)
 
 ---
@@ -14,13 +17,16 @@ Aplikasi WebGIS interaktif untuk memvisualisasikan prediksi **kenyamanan termal*
 ## Daftar Isi
 - [Demonstrasi Visual](#demonstrasi-visual)
 - [Tentang Proyek](#tentang-proyek)
-- [Arsitektur & Struktur Direktori](#arsitektur--struktur-direktori)
+- [Arsitektur & Aliran Data](#arsitektur--aliran-data)
+- [Struktur Direktori Proyek](#struktur-direktori-proyek)
 - [Fitur Utama](#fitur-utama)
-- [Dependensi Utama](#dependensi-utama)
-- [Prasyarat (Prerequisites)](#prasyarat-prerequisites)
+- [Spesifikasi Teknologi (Tech Stack)](#spesifikasi-teknologi-tech-stack)
 - [Panduan Instalasi & Penggunaan](#panduan-instalasi--penggunaan)
-- [Pengujian & Testing](#pengujian--testing)
-- [Kontribusi & Hak Cipta](#kontribusi--hak-cipta)
+- [Pengujian & Penjaminan Kualitas (Testing)](#pengujian--penjaminan-kualitas-testing)
+  - [1. Pengujian Unit (Vitest)](#1-pengujian-unit-vitest)
+  - [2. Pengujian End-to-End (Playwright)](#2-pengujian-end-to-end-playwright)
+- [Offline Mode & PWA Architecture](#offline-mode--pwa-architecture)
+- [Kontribusi & Kontak](#kontribusi--kontak)
 
 ---
 
@@ -38,156 +44,187 @@ Berikut adalah cuplikan rekaman interaksi langsung pada dasbor WebGIS (memilih b
 
 ## Tentang Proyek
 
-Proyek ini dibangun sebagai bagian dari penelitian Tugas Akhir (Skripsi) di **Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG)**. WebGIS ini dirancang untuk membantu wisatawan maupun pengelola destinasi wisata di Provinsi Bali dalam merencanakan aktivitas luar ruangan berdasarkan tingkat kenyamanan termal real-time dan prakiraan.
-
-Peta choropleth merender warna poligon desa berdasarkan kategori kenyamanan PET terpanas (maksimum) dari seluruh destinasi wisata di dalam wilayah administrasi tersebut.
+Sistem informasi geospasial ini dirancang untuk memetakan beban panas (*thermal load*) dan kenyamanan tubuh manusia di ruang terbuka pada destinasi wisata Bali. Peta choropleth merender warna poligon desa berdasarkan kategori kenyamanan PET maksimum dari seluruh objek wisata di dalam wilayah tersebut, memberikan gambaran cepat bagi wisatawan untuk merencanakan waktu kunjungan terbaik.
 
 ---
 
-## Arsitektur & Struktur Direktori
+## Arsitektur & Aliran Data
 
-Repositori ini disusun menggunakan pola standar proyek React + Vite dengan struktur direktori yang modular sebagai berikut:
+Aplikasi ini mengadopsi pendekatan *offline-first* dengan sinkronisasi real-time:
+
+```mermaid
+graph TD
+    A[Pipeline Python: biometeo_worker] -->|1. Hitung PET & Upload Batch| B(Supabase PostgreSQL)
+    B -->|2. Trigger Realtime Webhook| C[Supabase Edge Function]
+    C -->|3. Kirim Web Push Notification| D[Service Worker PWA]
+    D -->|4. Post Message / Auto-Update| E[WebGIS React UI]
+    B -->|5. GET Query REST API| D
+    D -->|6. Cache Interceptor| E
+```
+
+---
+
+## Struktur Direktori Proyek
+
+Repositori ini ditata secara modular untuk memisahkan logika database, skenario pengujian, dan komponen visual React:
 
 ```text
 webgis/
-├── e2e/                # Skenario pengujian End-to-End (Playwright)
-├── public/             # Aset statis publik (ikon, gambar demo)
-├── src/                # Kode sumber utama aplikasi
-│   ├── assets/         # Aset gambar, ikon, dan gaya tambahan
-│   ├── components/     # Komponen UI yang reusable
-│   │   ├── ui/         # Komponen dasar visual (Button, Dialog, dll via shadcn)
-│   │   ├── map/        # Komponen rendering peta Leaflet
-│   │   ├── chart/      # Visualisasi tren kenyamanan dengan Recharts
-│   │   ├── sidebar/    # Panel navigasi dan daftar destinasi wisata
-│   │   ├── popup/      # Detail parameter cuaca & popup destinasi
-│   │   └── notifications/ # Tombol pendaftaran push notification
-│   ├── data/           # Kueri database & master data lokal
-│   ├── hooks/          # Custom React hooks (geolokasi, state queries)
-│   ├── lib/            # Utilitas global, translator i18n, & client Supabase
-│   ├── pages/          # Halaman dasbor utama (Index.tsx)
-│   ├── test/           # Setup pengujian Vitest & mocks
-│   ├── App.tsx         # Entrypoint komponen aplikasi
-│   └── main.tsx        # File inisialisasi React ke DOM
-├── vite.config.ts      # Konfigurasi bundler Vite dan Vitest
-└── tsconfig.json       # Konfigurasi TypeScript compiler
+├── db/                         # Skema database lokal & eksportir data (PostgreSQL)
+│   ├── schema.sql              # Skema tabel dasar, foreign keys, triggers, dan index
+│   ├── rls_policies.sql        # Kebijakan Row-Level Security (RLS) untuk keamanan baca-tulis
+│   └── push_notifications.sql  # Tabel pendaftaran push notification VAPID
+├── e2e/                        # Skenario pengujian integrasi visual (Playwright E2E)
+│   └── webgis.spec.ts          # Rangkaian tes 5 skenario utama lintas browser
+├── public/                     # Aset statis public (tidak dibundel oleh compiler)
+│   ├── data/                   # File GeoJSON batas administrasi desa/kelurahan Bali
+│   ├── icons/                  # Ikon resolusi tinggi & logo splash PWA
+│   ├── sw.js                   # Service Worker utama (Caching & Push Message handler)
+│   └── manifest.json           # Manifest PWA untuk instalasi di Android/iOS/Desktop
+├── src/                        # Kode sumber React & TypeScript utama
+│   ├── assets/                 # Logo instansi pendukung format WebP terkompresi
+│   ├── components/             # Komponen UI modular
+│   │   ├── ui/                 # Komponen UI visual dasar (Button, Dialog, Accordion via shadcn)
+│   │   ├── map/                # Komponen rendering peta Leaflet (LeafletMap.tsx)
+│   │   ├── chart/              # (Recharts) Visualisasi grafik tren kenyamanan
+│   │   ├── sidebar/            # Panel pencarian & daftar destinasi wisata (DestinationSidebar.tsx)
+│   │   ├── popup/              # Detail parameter cuaca & saran aktivitas (WeatherPopup.tsx)
+│   │   ├── pwa/                # Prompt dialog instalasi PWA (InstallPrompt.tsx)
+│   │   └── notifications/      # Tombol toggle pendaftaran notifikasi push
+│   ├── data/                   # Adapter API database (supabaseQueries.ts)
+│   ├── hooks/                  # React Hooks kustom (geolocation, monitoring batch realtime, dsb)
+│   ├── lib/                    # Utilitas global (i18n, timezone, pushNotification, pet)
+│   ├── pages/                  # Halaman dasbor utama (Index.tsx)
+│   ├── test/                   # Setup pengujian unit & mocks (Vitest)
+│   ├── App.tsx                 # Entrypoint utama router aplikasi
+│   └── main.tsx                # File inisialisasi React ke DOM
+├── supabase/                   # Konfigurasi lokal Supabase & Edge Functions
+└── vite.config.ts              # Konfigurasi bundler Vite dan Vitest
 ```
 
 ---
 
 ## Fitur Utama
 
-- **Peta Interaktif (Leaflet)**: Peta choropleth Bali yang diwarnai dinamis sesuai tingkat kenyamanan termal saat ini.
-- **Tab Panel Informasi**: Memisahkan detail cuaca terkini (suhu, kelembapan, kecepatan angin, arah angin, kondisi visual, jarak pandang) dengan grafik tren kenyamanan.
-- **Grafik Tren Kenyamanan & Suhu (Recharts)**:
-  - Visualisasi PET menggunakan diagram area dengan gradien warna dinamis (merah untuk sangat panas, hijau untuk nyaman, dst.) per titik waktu.
-  - Ditambah garis putus-putus (*dashed line*) visualisasi tren Suhu Udara (°C).
-  - **Sinkronisasi Waktu Interaktif**: Klik pada titik mana pun di grafik tren untuk menyelaraskan jam aktif dasbor dan peta.
-- **Toleransi Waktu (Fuzzy Matching)**: Penanganan data BMKG otomatis dengan pencarian jam terdekat berbasis batas toleransi ±90 menit (`NEAREST_TOLERANCE_MS`).
-- **Sidebar Destinasi**: Dilengkapi pencarian nama, pintasan sorot ke peta, serta pengelompokan per wilayah kabupaten/kecamatan.
-- **PWA & Offline Caching (Production-Ready)**:
-  - Dukungan instalasi aplikasi langsung dari browser, manifest, dan service worker.
-  - **PWA Auto-Update Real-time**: Service worker mendeteksi notifikasi push batch data cuaca baru (`NEW_BATCH_NOTIFICATION`) dan secara otomatis memicu refresh data di latar belakang pada halaman dasbor tanpa memerlukan refresh browser manual oleh pengguna.
-  - **Dukungan Rerun Dinamis (Run 2/3)**: Membandingkan timestamp `updated_at` untuk mendeteksi eksekusi ulang pada batch yang sama secara dinamis.
-- **Optimasi Produksi (Zero Logs)**: Menonaktifkan log konsol browser di lingkungan produksi untuk privasi dan kinerja aplikasi yang optimal.
-- **Push Notification**: Berlangganan notifikasi otomatis saat batch data prakiraan cuaca baru selesai diproduksi oleh backend.
+- **Peta Choropleth Dinamis (Leaflet)**: Visualisasi spasial tingkat kenyamanan menggunakan basemap **Carto Voyager** yang responsif terhadap perubahan waktu.
+- **Grafik Tren Kenyamanan (Recharts)**: Diagram area bergradien warna dinamis sesuai kategori kenyamanan termal PET diiringi garis putus-putus (*dashed line*) untuk tren suhu udara (°C).
+- **Sinkronisasi Waktu Interaktif**: Mengklik titik mana pun pada grafik tren akan menyelaraskan jam aktif dasbor dan peta secara global.
+- **Toleransi Pencocokan Waktu (Fuzzy Matching)**: Penanganan ketidakcocokan waktu data BMKG melalui pencarian data terdekat dengan batas toleransi ±90 menit.
+- **Pre-fetching Gambar Paralel (Offline-First)**: Secara otomatis mengunduh **49 gambar destinasi wisata** ke cache lokal browser (`bali-pet-images-v3`) pada saat inisialisasi peta guna mencegah gambar rusak saat luring.
+- **Service Worker Auto-Update**: Mendeteksi push notifikasi batch data cuaca baru dan memicu pembaruan data di latar belakang tanpa mengharuskan pengguna memuat ulang halaman secara manual.
+- **Optimasi Produksi (Zero Logs)**: Menonaktifkan log konsol browser (`console.log`, `console.debug`) di lingkungan produksi secara otomatis untuk privasi data dan peningkatan kinerja.
 
 ---
 
-## Dependensi Utama
+## Spesifikasi Teknologi (Tech Stack)
 
-Detail library kunci yang membentuk inti fungsionalitas WebGIS ini:
-*   **React (v18.3)** & **TypeScript**: Framework utama dan pengetikan statis untuk keamanan kode.
-*   **Leaflet & React-Leaflet**: Rendering peta interaktif serta manipulasi layer choropleth.
-*   **Recharts**: Library visualisasi grafik untuk menyajikan tren data historis dan forecast.
-*   **Supabase JS Client**: Library penghubung database postgres secara realtime dan aman.
-*   **Framer Motion**: Library animasi untuk menghadirkan transisi halus pada elemen antarmuka.
-*   **Tailwind CSS & shadcn/ui**: Kerangka penataan gaya visual komponen UI.
-
----
-
-## Prasyarat (Prerequisites)
-
-Sebelum mulai menjalankan aplikasi secara lokal, pastikan perangkat Anda sudah terinstal:
-- **Node.js** (versi 18 ke atas)
-- Browser modern dengan dukungan Geolocation dan Web Push (seperti Chrome, Edge, atau Firefox)
+*   **UI Library**: React v18.3.1
+*   **Bahasa Pemrograman**: TypeScript v5.8.3
+*   **Bundler & Test Runner**: Vite v7.3.0 + SWC Compiler
+*   **Styling**: Tailwind CSS v3.4.17 + shadcn/ui
+*   **Mapping Engine**: Leaflet v1.9.4 + React-Leaflet
+*   **Database Cloud**: Supabase (PostgreSQL)
 
 ---
 
 ## Panduan Instalasi & Penggunaan
 
-1. **Unduh repositori dan masuk ke folder proyek**:
-   ```bash
-   cd webgis
-   ```
+### 1. Prasyarat
+Pastikan komputer Anda sudah terinstal:
+*   [Node.js](https://nodejs.org) (Versi 18.x ke atas)
+*   [Git](https://git-scm.com)
 
-2. **Instal dependensi package**:
-   ```bash
-   npm install
-   ```
-
-3. **Konfigurasi Environment**:
-   Buat file baru bernama `.env.local` di folder root `webgis/` dan isi variabel berikut:
-
-   | Variabel | Deskripsi | Status |
-   | :--- | :--- | :---: |
-   | `VITE_SUPABASE_URL` | URL endpoint proyek database Supabase Anda. | **Wajib** |
-   | `VITE_SUPABASE_ANON_KEY` | Kunci anonim (public key) untuk akses API Supabase. | **Wajib** |
-   | `VITE_VAPID_PUBLIC_KEY` | Kunci publik VAPID untuk mengaktifkan fitur Push Notifications. | *Opsional* |
-
-   Contoh isi file `.env.local`:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_VAPID_PUBLIC_KEY=your_vapid_public_key
-   ```
-
-4. **Jalankan aplikasi di mode pengembangan (lokal)**:
-   ```bash
-   npm run dev
-   ```
-   Aplikasi akan berjalan secara lokal di [http://localhost:8080](http://localhost:8080).
-
-5. **Build proyek untuk mode produksi**:
-   ```bash
-   npm run build
-   npm run preview
-   ```
-
----
-
-## Pengujian & Testing
-
-Dasbor ini dilengkapi dua jenis verifikasi otomatis untuk menjaga kualitas kode:
-
-### 1. Unit Testing (Vitest)
-Digunakan untuk menguji logika bisnis deterministik (seperti konversi WITA, perhitungan fuzzy matching, pengelompokan menu, kamus bahasa, dan klasifikasi PET):
+### 2. Instalasi Dependensi
+Kloning atau buka folder proyek `webgis`, kemudian pasang seluruh modul dependensi:
 ```bash
-npm run test
+cd webgis
+npm install
 ```
 
-### 2. End-to-End (E2E) Testing (Playwright)
-Menguji alur interaksi antarmuka pengguna secara nyata pada 3 browser utama (**Chromium**, **Firefox**, dan **WebKit**) secara berurutan menggunakan 3 workers untuk keandalan eksekusi:
-- **Skenario 1**: Dasbor (Verifikasi pemuatan awal peta Leaflet dan sidebar).
-- **Skenario 2**: Klik Sidebar Destinasi & Membuka Pop-up Cuaca (Navigasi sidebar dan validasi pop-up).
-- **Skenario 3**: Interaksi Grafik Tren PET & Sinkronisasi Waktu (Pemicuan hover & klik titik grafik tren Recharts untuk menyelaraskan jam dasbor, dengan navigasi fallback).
-- **Skenario 4**: Selektor Standar PET (Pergantian klasifikasi iklim Sedang/Tropis via legenda responsif desktop/mobile).
-- **Skenario 5**: Pergantian Bahasa (Simulasi pertukaran bahasa dinamis Indonesia/Inggris).
+### 3. Konfigurasi Environment
+Buat berkas `.env.local` di direktori root `webgis/` dan masukkan konfigurasi Supabase Anda:
+```env
+VITE_SUPABASE_URL=https://proyek-anda.supabase.co
+VITE_SUPABASE_ANON_KEY=token_anonim_supabase_anda
+VITE_VAPID_PUBLIC_KEY=kunci_publik_push_notifikasi_anda
+```
 
+### 4. Menjalankan di Server Lokal
+Mulai server pengembangan lokal:
 ```bash
-# Instal browser biner Playwright jika pertama kali
-npx playwright install
+npm run dev
+```
+Aplikasi akan berjalan di alamat [http://127.0.0.1:8080](http://127.0.0.1:8080).
 
-# Jalankan semua pengujian E2E
-npm run test:e2e
+### 5. Build Produksi
+Lakukan build kompilasi produksi untuk menghasilkan bundel kode teroptimasi:
+```bash
+npm run build
+npm run preview
 ```
 
 ---
 
-## Kontribusi & Hak Cipta
+## Pengujian & Penjaminan Kualitas (Testing)
 
-Proyek ini bersifat **private** (tertutup). Seluruh hak cipta dilindungi oleh penulis dan Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG). 
+Aplikasi WebGIS dilengkapi dengan dua metode pengujian komprehensif untuk memastikan seluruh alur fungsi berjalan stabil:
 
-Hubungi penulis jika ada pertanyaan lebih lanjut terkait penelitian ini:
+### 1. Pengujian Unit (Vitest)
+Digunakan untuk memverifikasi logika deterministik (seperti fuzzy matching waktu, konversi timezone WITA, klasifikasi PET, multibahasa, dan state toggle notifikasi).
+*   **Cakupan**: **61 skenario pengujian** dengan **100% Code Coverage** (Statements, Branches, Functions, Lines) pada modul logika kritis.
+*   **Perintah menjalankan tes**:
+    ```bash
+    # Eksekusi tes unit biasa (CLI)
+    npm run test
+
+    # Jalankan tes unit beserta pembuatan laporan coverage
+    npm run test:coverage
+
+    # Jalankan tes unit dengan dasbor Vitest UI interaktif di browser
+    npm run test:ui
+    ```
+
+### 2. Pengujian End-to-End (Playwright)
+Menguji interaksi antarmuka pengguna pada browser asli (**Chromium**, **Firefox**, dan **WebKit**) secara berurutan menggunakan 3 workers guna menjamin keandalan eksekusi tanpa kebocoran resource.
+*   **Cakupan**: **15 pengujian** (5 skenario di masing-masing dari 3 peramban pengujian):
+    1.  **Skenario 1: Dasbor** - Memastikan peta choropleth Leaflet terpasang di DOM dan sidebar utama terlihat.
+    2.  **Skenario 2: Klik Sidebar Destinasi & Membuka Pop-up Cuaca** - Mengklik destinasi pertama dan memastikan pop-up detail cuaca terbuka dengan benar.
+    3.  **Skenario 3: Interaksi Grafik Tren PET & Sinkronisasi Waktu** - Mensimulasikan gerakan pointer hover dan klik pada grafik tren Recharts untuk menyinkronkan waktu dasbor global, dilengkapi tombol navigasi waktu sebagai fallback.
+    4.  **Skenario 4: Selektor Standar PET** - Mengganti klasifikasi iklim (Sedang/Tropis) via dropdown legenda pada layout responsif (desktop/mobile).
+    5.  **Skenario 5: Pergantian Bahasa** - Mengubah bahasa aplikasi (Indonesia/Inggris) timbal-balik dan memvalidasi translasi seluruh teks UI secara langsung.
+*   **Perintah menjalankan tes**:
+    ```bash
+    # Instal browser biner Playwright (jika pertama kali)
+    npx playwright install
+
+    # Jalankan pengujian E2E (mode headless)
+    npm run test:e2e
+
+    # Jalankan pengujian E2E dengan Playwright UI Mode interaktif
+    npm run test:e2e:ui
+    ```
+
+---
+
+## Offline Mode & PWA Architecture
+
+Aplikasi ini menggunakan teknologi Progressive Web App (PWA) untuk mendukung akses luring penuh (*fully offline support*):
+1.  **Caching Strategis**:
+    *   `CACHE_NAME` (`bali-pet-v3`): Menyimpan aset statis yang stabil (HTML, manifest, ikon splash screen, GeoJSON peta).
+    *   `IMAGE_CACHE` (`bali-pet-images-v3`): Menyimpan gambar objek wisata yang di-prefetch secara paralel di latar belakang.
+    *   `API_CACHE` (`bali-pet-api-v3`): Menyimpan respons data JSON prakiraan cuaca dari Supabase REST API menggunakan strategi *Network-First falling back to Cache*.
+2.  **Penanganan Luring Komponen Peta**:
+    Service worker mengintersept kegagalan unduhan ubin peta Carto Voyager saat offline dan mengembalikan status `503 Service Unavailable` secara anggun alih-alih memicu uncaught promise rejection pada peta Leaflet.
+3.  **Penanganan Luring WebSocket**:
+    Hook monitoring batch data Supabase mendeteksi status `navigator.onLine` untuk secara dinamis melepas koneksi WebSocket saat offline untuk mencegah konsumsi berlebih pada konsol error peramban.
+
+---
+
+## Kontribusi & Kontak
+
+Proyek ini bersifat tertutup (private) untuk kepentingan Tugas Akhir. Hubungi penulis apabila memiliki pertanyaan terkait sistem ini:
+
 *   **Nama**: Ahmad Meijlan Yasir
 *   **Email**: yasirahmad220504@gmail.com
 *   **Instansi**: Sekolah Tinggi Meteorologi Klimatologi dan Geofisika (STMKG), Tangerang.
+
