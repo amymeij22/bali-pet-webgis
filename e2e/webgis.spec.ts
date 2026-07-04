@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('WebGIS E2E Test Suite', () => {
 
-  test('Skenario 1: Dasbor', async ({ page }) => {
+  test('Skenario 1: Halaman Utama', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('load');
     await page.locator('.leaflet-container').waitFor({ state: 'attached', timeout: 10000 });

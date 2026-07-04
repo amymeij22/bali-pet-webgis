@@ -187,7 +187,7 @@ Digunakan untuk memverifikasi logika deterministik (seperti fuzzy matching waktu
 ### 2. Pengujian End-to-End (Playwright)
 Menguji interaksi antarmuka pengguna pada browser asli (**Chromium**, **Firefox**, dan **WebKit**) secara berurutan menggunakan 3 workers guna menjamin keandalan eksekusi tanpa kebocoran resource.
 *   **Cakupan**: **15 pengujian** (5 skenario di masing-masing dari 3 peramban pengujian):
-    1.  **Skenario 1: Dasbor** - Memastikan peta choropleth Leaflet terpasang di DOM dan sidebar utama terlihat.
+    1.  **Skenario 1: Halaman Utama** - Memastikan peta choropleth Leaflet terpasang di DOM dan sidebar utama terlihat.
     2.  **Skenario 2: Klik Sidebar Destinasi & Membuka Pop-up Cuaca** - Mengklik destinasi pertama dan memastikan pop-up detail cuaca terbuka dengan benar.
     3.  **Skenario 3: Interaksi Grafik Tren PET & Sinkronisasi Waktu** - Mensimulasikan gerakan pointer hover dan klik pada grafik tren Recharts untuk menyinkronkan waktu dasbor global, dilengkapi tombol navigasi waktu sebagai fallback.
     4.  **Skenario 4: Selektor Standar PET** - Mengganti klasifikasi iklim (Sedang/Tropis) via dropdown legenda pada layout responsif (desktop/mobile).
