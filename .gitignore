@@ -39,7 +39,9 @@ playwright/.cache/
 
 # Local Project documentation
 project-summary.md
+webgis-project-summary.md
 
 # Vitest Coverage
 coverage/
+
 

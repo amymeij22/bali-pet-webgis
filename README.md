@@ -6,7 +6,7 @@ Aplikasi WebGIS interaktif untuk memvisualisasikan prediksi **kenyamanan termal*
 [![Vite](https://img.shields.io/badge/Vite-7.3-purple?logo=vite)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue?logo=typescript)](https://typescriptlang.org)
 [![Vitest](https://img.shields.io/badge/Tests-61%20Passed-green?logo=vitest)](https://vitest.dev)
-[![Playwright](https://img.shields.io/badge/E2E-12%20Passed-green?logo=playwright)](https://playwright.dev)
+[![Playwright](https://img.shields.io/badge/E2E-15%20Passed-green?logo=playwright)](https://playwright.dev)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](#)
 
 ---
@@ -166,10 +166,16 @@ npm run test
 ```
 
 ### 2. End-to-End (E2E) Testing (Playwright)
-Menguji alur interaksi antarmuka pengguna pada browser Chromium nyata (seperti memuat peta Leaflet, berganti bahasa, memicu pop-up dari klik sidebar, dan klik grafik tren):
+Menguji alur interaksi antarmuka pengguna secara nyata pada 3 browser utama (**Chromium**, **Firefox**, dan **WebKit**) secara berurutan menggunakan 3 workers untuk keandalan eksekusi:
+- **Skenario 1**: Dasbor (Verifikasi pemuatan awal peta Leaflet dan sidebar).
+- **Skenario 2**: Klik Sidebar Destinasi & Membuka Pop-up Cuaca (Navigasi sidebar dan validasi pop-up).
+- **Skenario 3**: Interaksi Grafik Tren PET & Sinkronisasi Waktu (Pemicuan hover & klik titik grafik tren Recharts untuk menyelaraskan jam dasbor, dengan navigasi fallback).
+- **Skenario 4**: Selektor Standar PET (Pergantian klasifikasi iklim Sedang/Tropis via legenda responsif desktop/mobile).
+- **Skenario 5**: Pergantian Bahasa (Simulasi pertukaran bahasa dinamis Indonesia/Inggris).
+
 ```bash
 # Instal browser biner Playwright jika pertama kali
-npx playwright install chromium
+npx playwright install
 
 # Jalankan semua pengujian E2E
 npm run test:e2e
