@@ -281,12 +281,39 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="item-8" className="border-b-0">
+                  <AccordionItem value="item-8" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
                       {t('faq_q8')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
                       {t('faq_a8')}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-9" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {t('faq_q9')}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {t('faq_a9')}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-10" className="border-b border-border/50">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {t('faq_q10')}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {t('faq_a10')}
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="item-11" className="border-b-0">
+                    <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
+                      {t('faq_q11')}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
+                      {t('faq_a11')}
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
