@@ -220,73 +220,73 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
                 <Accordion type="single" collapsible className="w-full space-y-0">
                   <AccordionItem value="item-1" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Apa itu kenyamanan termal?'}
+                      {t('faq_q1')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'Kenyamanan termal adalah tingkat "nyaman atau tidaknya" tubuh saat berada di luar ruang, yang dipengaruhi oleh suhu udara, kelembapan, angin, dan radiasi matahari. Di lingkungan terbuka seperti pantai atau taman, radiasi matahari sering membuat kondisi terasa lebih panas dibanding sekadar angka suhu udara.'}
+                      {t('faq_a1')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-2" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Apa itu indeks PET dan bagaimana membacanya?'}
+                      {t('faq_q2')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'PET (Physiological Equivalent Temperature) adalah indeks biometeorologi dalam satuan °C yang merangkum pengaruh suhu, kelembapan, angin, dan radiasi menjadi "suhu ekuivalen" yang merepresentasikan beban panas yang dirasakan tubuh. Semakin tinggi nilai PET, umumnya semakin besar potensi stres panas; sebaliknya nilai rendah menunjukkan kondisi lebih sejuk/dingin.'}
+                      {t('faq_a2')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-3" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Kenapa ada pilihan standar "Temperate" dan "(Sub)Tropis"?'}
+                      {t('faq_q3')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'Standar klasifikasi berbeda karena tingkat adaptasi (aklimatisasi) terhadap panas bisa berbeda antar kelompok. Pilihan Temperate cenderung lebih konservatif (lebih cepat memberi sinyal panas) dan dapat relevan bagi wisatawan dari iklim sedang, sedangkan (Sub)Tropis lebih representatif bagi pengguna yang terbiasa iklim panas-lembap. Mengganti standar akan mengubah legenda dan pewarnaan peta.'}
+                      {t('faq_a3')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-4" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Bagaimana cara menggunakan peta dan slider waktu?'}
+                      {t('faq_q4')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'Peta menampilkan poligon wilayah dengan warna sesuai kelas PET pada waktu yang dipilih. Gunakan slider waktu untuk melihat perubahan prediksi setiap 3 jam hingga beberapa hari ke depan; saat waktu berubah, warna peta dan nilai pada lokasi ikut diperbarui sesuai prakiraan pada waktu tersebut.'}
+                      {t('faq_a4')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-5" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Apa isi pop-up saat saya klik suatu lokasi?'}
+                      {t('faq_q5')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'Pop-up menampilkan nilai PET, kelas kenyamanan termal, dan parameter cuaca pendukung (misalnya suhu udara, kelembapan, angin, kondisi cuaca) untuk waktu prakiraan yang sedang dipilih. Informasi ini membantu memahami "kenapa" suatu lokasi tampak lebih panas/sejuk pada peta.'}
+                      {t('faq_a5')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-6" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Seberapa sering data diperbarui dan apa itu "waktu produksi"?'}
+                      {t('faq_q6')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'Data diperbarui secara berkala mengikuti pembaruan prakiraan BMKG, lalu diproses menjadi satu "batch" (paket prediksi terbaru). WebGIS menampilkan waktu produksi terbaru sehingga informasi yang Anda lihat merupakan hasil pemrosesan prakiraan paling mutakhir pada saat itu.'}
+                      {t('faq_a6')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-7" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Apakah informasi ini bisa dijadikan acuan medis atau rekomendasi aktivitas?'}
+                      {t('faq_q7')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'Tidak. Informasi pada WebGIS bersifat informatif dan interpretatif untuk membantu memahami kondisi termal lingkungan, bukan diagnosis medis maupun rekomendasi perilaku spesifik. Kondisi kenyamanan tiap orang dapat berbeda, sehingga keputusan aktivitas tetap disesuaikan dengan kondisi dan kebutuhan masing-masing.'}
+                      {t('faq_a7')}
                     </AccordionContent>
                   </AccordionItem>
 
                   <AccordionItem value="item-8" className="border-b-0">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
-                      {'Apa fungsi PWA dan notifikasi?'}
+                      {t('faq_q8')}
                     </AccordionTrigger>
                     <AccordionContent className="text-xs sm:text-sm leading-relaxed text-justify pb-3">
-                      {'PWA memungkinkan WebGIS digunakan lebih praktis di perangkat pengguna seperti aplikasi. Notifikasi bersifat opsional (opt-in) dan hanya memberi tahu saat prediksi/batch terbaru tersedia, agar Anda tidak perlu mengecek manual.'}
+                      {t('faq_a8')}
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
