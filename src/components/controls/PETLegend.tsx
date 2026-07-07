@@ -196,7 +196,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative z-10 glass-panel rounded-xl p-4 sm:p-6 w-full max-w-md max-h-[90vh] flex flex-col mx-auto"
+              className="relative z-10 glass-panel rounded-xl p-4 sm:p-6 w-[92vw] sm:w-[440px] h-[80vh] sm:h-[600px] max-h-[640px] flex flex-col mx-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -216,7 +216,7 @@ export default function PETLegend({ standard, onStandardChange }: PETLegendProps
               </div>
 
               {/* Scrollable Content */}
-              <div className="px-2 sm:px-4 overflow-y-auto flex-1">
+              <div className="px-2 sm:px-4 overflow-y-auto flex-1 no-scrollbar">
                 <Accordion type="single" collapsible className="w-full space-y-0">
                   <AccordionItem value="item-1" className="border-b border-border/50">
                     <AccordionTrigger className="text-xs sm:text-sm font-medium text-left py-3">
