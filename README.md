@@ -110,7 +110,7 @@ webgis/
 - **Grafik Tren Kenyamanan (Recharts)**: Diagram area bergradien warna dinamis sesuai kategori kenyamanan termal PET diiringi garis putus-putus (*dashed line*) untuk tren suhu udara (°C).
 - **Sinkronisasi Waktu Interaktif**: Mengklik titik mana pun pada grafik tren akan menyelaraskan jam aktif dasbor dan peta secara global.
 - **Toleransi Pencocokan Waktu (Fuzzy Matching)**: Penanganan ketidakcocokan waktu data BMKG melalui pencarian data terdekat dengan batas toleransi ±90 menit.
-- **Pre-fetching Gambar Paralel (Offline-First)**: Secara otomatis mengunduh **49 gambar destinasi wisata** ke cache lokal browser (`bali-pet-images-v3`) pada saat inisialisasi peta guna mencegah gambar rusak saat luring.
+- **Pre-fetching Gambar Paralel (Offline-First)**: Secara otomatis mengunduh **49 gambar destinasi wisata** ke cache lokal browser (`bali-pet-images-v1`) pada saat inisialisasi peta guna mencegah gambar rusak saat luring.
 - **Service Worker Auto-Update**: Mendeteksi push notifikasi batch data cuaca baru dan memicu pembaruan data di latar belakang tanpa mengharuskan pengguna memuat ulang halaman secara manual.
 - **Optimasi Produksi (Zero Logs)**: Menonaktifkan log konsol browser (`console.log`, `console.debug`) di lingkungan produksi secara otomatis untuk privasi data dan peningkatan kinerja.
 
@@ -210,9 +210,9 @@ Menguji interaksi antarmuka pengguna pada browser asli (**Chromium**, **Firefox*
 
 Aplikasi ini menggunakan teknologi Progressive Web App (PWA) untuk mendukung akses luring penuh (*fully offline support*):
 1.  **Caching Strategis**:
-    *   `CACHE_NAME` (`bali-pet-v3`): Menyimpan aset statis yang stabil (HTML, manifest, ikon splash screen, GeoJSON peta).
-    *   `IMAGE_CACHE` (`bali-pet-images-v3`): Menyimpan gambar objek wisata yang di-prefetch secara paralel di latar belakang.
-    *   `API_CACHE` (`bali-pet-api-v3`): Menyimpan respons data JSON prakiraan cuaca dari Supabase REST API menggunakan strategi *Network-First falling back to Cache*.
+    *   `CACHE_NAME` (`bali-pet-v1`): Menyimpan aset statis yang stabil (HTML, manifest, ikon splash screen, GeoJSON peta).
+    *   `IMAGE_CACHE` (`bali-pet-images-v1`): Menyimpan gambar objek wisata yang di-prefetch secara paralel di latar belakang.
+    *   `API_CACHE` (`bali-pet-api-v1`): Menyimpan respons data JSON prakiraan cuaca dari Supabase REST API menggunakan strategi *Network-First falling back to Cache*.
 2.  **Penanganan Luring Komponen Peta**:
     Service worker mengintersept kegagalan unduhan ubin peta Carto Voyager saat offline dan mengembalikan status `503 Service Unavailable` secara anggun alih-alih memicu uncaught promise rejection pada peta Leaflet.
 3.  **Penanganan Luring WebSocket**:
