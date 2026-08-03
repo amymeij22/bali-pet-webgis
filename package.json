@@ -19,7 +19,8 @@
     "db:export:data": "tsx db/export-dummy-data.ts",
     "db:export:all": "npm run db:export:geojson && npm run db:export:data",
     "db:export:geojson:simple": "node db/export-geojson-simple.js",
-    "db:verify": "tsx db/verify-export.ts"
+    "db:verify": "tsx db/verify-export.ts",
+    "test:push": "node scripts/trigger-test-push.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
