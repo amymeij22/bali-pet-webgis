@@ -63,7 +63,6 @@ Deno.serve(async (req) => {
   console.log('[Push Function] URL:', req.url);
   
   try {
-    // Log raw body untuk debugging
     const rawBody = await req.text();
     console.log('[Push Function] Raw body:', rawBody);
     
@@ -80,10 +79,7 @@ Deno.serve(async (req) => {
     
     console.log('[Push Function] Parsed body:', JSON.stringify(body, null, 2));
     
-    // Handle berbagai format payload
     const payload: WebhookPayload = body;
-    
-    // Normalize payload format
     const eventType = payload.type || payload.eventType || 'INSERT';
     const table = payload.table || 'forecast_batches';
     const record = payload.record || payload.new || body;
@@ -92,7 +88,7 @@ Deno.serve(async (req) => {
     console.log('[Push Function] Table:', table);
     console.log('[Push Function] Record:', JSON.stringify(record, null, 2));
     
-    // Hanya handle INSERT atau UPDATE
+    // Filter event
     if (eventType !== 'INSERT' && eventType !== 'UPDATE') {
       console.log('[Push Function] Event type not INSERT/UPDATE, skipping');
       return new Response(JSON.stringify({ message: 'Event type not supported' }), {
@@ -101,7 +97,7 @@ Deno.serve(async (req) => {
       });
     }
     
-    // Hanya handle forecast_batches table
+    // Filter tabel
     if (table !== 'forecast_batches') {
       console.log('[Push Function] Table is not forecast_batches, skipping');
       return new Response(JSON.stringify({ message: 'Table not supported' }), {
@@ -110,7 +106,6 @@ Deno.serve(async (req) => {
       });
     }
     
-    // Validasi record
     if (!record || !record.id) {
       console.error('[Push Function] Invalid record:', record);
       return new Response(JSON.stringify({ error: 'Invalid record format' }), {
@@ -119,7 +114,7 @@ Deno.serve(async (req) => {
       });
     }
     
-    // Hanya proses jika is_latest = true
+    // Filter is_latest
     if (!record.is_latest) {
       console.log('[Push Function] Batch is not latest, skipping. is_latest:', record.is_latest);
       return new Response(JSON.stringify({ message: 'Batch is not latest, skipped' }), {
@@ -128,7 +123,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Jika eventType adalah UPDATE, pastikan is_latest berubah dari false menjadi true
+    // Cek perubahan status is_latest
     if (eventType === 'UPDATE') {
       const oldRecord = payload.old || payload.old_record;
       if (oldRecord && oldRecord.is_latest === true) {
@@ -142,7 +137,7 @@ Deno.serve(async (req) => {
     
     console.log('[Push Function] Processing batch:', record.id);
     
-    // Get all active push subscriptions
+    // Ambil subscription aktif
     const { data: subscriptions, error: subError } = await supabase
       .from('push_subscriptions')
       .select('id, endpoint, p256dh, auth, is_active')
@@ -166,7 +161,6 @@ Deno.serve(async (req) => {
     
     console.log(`[Push Function] Found ${subscriptions.length} active subscriptions`);
     
-    // Format waktu produksi
     const producedDate = new Date(record.produced_at);
     const formattedDate = producedDate.toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -174,10 +168,10 @@ Deno.serve(async (req) => {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Makassar', // WITA
+      timeZone: 'Asia/Makassar',
     });
     
-    // Prepare notification payload
+    // Buat payload
     const notificationPayload = {
       title: 'Prakiraan Baru Tersedia',
       body: `Data prakiraan kenyamanan termal Destinasi Wisata Bali terbaru sudah tersedia (${formattedDate} WITA). Buka aplikasi untuk melihat peta interaktif.`,
@@ -201,7 +195,6 @@ Deno.serve(async (req) => {
     
     console.log('[Push Function] Sending push notifications...');
     
-    // Send push notification to all active subscriptions
     const results = await Promise.allSettled(
       subscriptions.map(async (sub: PushSubscription) => {
         try {
@@ -222,7 +215,7 @@ Deno.serve(async (req) => {
           
           console.log(`[Push Function] Successfully sent to ${sub.id}`);
           
-          // Update last_notified_batch_id and last_notified_at
+          // Catat metadata notifikasi
           await supabase
             .from('push_subscriptions')
             .update({
@@ -236,10 +229,9 @@ Deno.serve(async (req) => {
           console.error(`[Push Function] Error sending to ${sub.id}:`, error);
           console.error(`[Push Function] Error details:`, JSON.stringify(error, null, 2));
           
-          // Handle expired/invalid subscriptions
+          // Matikan subscription kedaluwarsa
           if (error.statusCode === 410 || error.statusCode === 404) {
             console.log(`[Push Function] Subscription ${sub.id} expired, marking as inactive`);
-            // Mark subscription as inactive
             await supabase
               .from('push_subscriptions')
               .update({ is_active: false })

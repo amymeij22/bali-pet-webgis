@@ -46,7 +46,7 @@ export function useBatchMonitor(
                 return;
               }
 
-              // Check if same batch AND same update timestamp
+              // Bandingkan ID dan waktu update batch
               const isSameBatch = currentBatchId === newBatch.id;
               const isSameUpdate = currentBatchUpdatedAt === newBatch.updated_at ||
                 (newBatch.updated_at && lastNotifiedBatchUpdatedAtRef.current === newBatch.updated_at);
@@ -104,7 +104,7 @@ export function useBatchMonitor(
   // Check for new batch/update on mount (fallback if Realtime doesn't work)
   useEffect(() => {
     const checkForNewBatch = async () => {
-      if (!navigator.onLine) return; // Skip if offline to avoid console log errors
+      if (!navigator.onLine) return;
       try {
         const latest = await getLatestBatch();
         if (latest) {
@@ -134,7 +134,7 @@ export function useBatchMonitor(
       }
     };
 
-    // Check after 5 seconds (give Realtime time to connect)
+    // Cek setelah 5 detik
     const timeout = setTimeout(checkForNewBatch, 5000);
 
     return () => clearTimeout(timeout);
@@ -148,19 +148,16 @@ export function useBatchMonitor(
  */
 async function showLocalNotification(batch: ForecastBatch): Promise<void> {
   try {
-    // Check if user is subscribed
     const subscription = await getCurrentSubscription();
     if (!subscription) {
       console.log('[Push] User not subscribed, skipping local notification');
       return;
     }
 
-    // Check notification permission
     if (!('Notification' in window) || Notification.permission !== 'granted') {
       return;
     }
 
-    // Format waktu produksi
     const producedDate = new Date(batch.produced_at);
     const formattedDate = producedDate.toLocaleDateString('id-ID', {
       day: 'numeric',
@@ -168,11 +165,10 @@ async function showLocalNotification(batch: ForecastBatch): Promise<void> {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZone: 'Asia/Makassar', // WITA
+      timeZone: 'Asia/Makassar',
     });
 
-    // Show local notification (fallback jika webhook/Edge Function belum trigger)
-    // Push notification utama tetap di-handle oleh Supabase Edge Function via webhook
+    // Show local notification
     new Notification('Prakiraan Baru Tersedia', {
       body: `Data prakiraan terbaru sudah tersedia (${formattedDate} WITA)`,
       icon: '/icons/icon-192x192.png',

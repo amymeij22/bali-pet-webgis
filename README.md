@@ -204,6 +204,9 @@ Menguji interaksi antarmuka pengguna pada browser asli (**Chromium**, **Firefox*
     npm run test:e2e:ui
     ```
 
+### 3. Pemeliharaan Kode (Code Maintenance)
+Baris komentar dalam kode sumber (`webgis/src/`) telah disederhanakan untuk menjaga keterbacaan tingkat tinggi, menghilangkan catatan penjelasan baris-demi-baris yang redundan (AI-generated) tanpa mempengaruhi fungsionalitas dan reaktivitas komponen dasbor WebGIS.
+
 ---
 
 ## Offline Mode & PWA Architecture

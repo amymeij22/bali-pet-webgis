@@ -12,7 +12,6 @@ export function nearestForecast(
   const target = new Date(targetTime).getTime();
   if (!Number.isFinite(target)) return null;
 
-  // binary search on ascending by forecast_time
   let lo = 0;
   let hi = list.length - 1;
   while (lo <= hi) {
