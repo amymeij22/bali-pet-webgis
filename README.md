@@ -106,7 +106,7 @@ webgis/
 
 ## Fitur Utama
 
-- **Peta Choropleth Dinamis (Leaflet)**: Visualisasi spasial tingkat kenyamanan menggunakan basemap **Carto Voyager** yang responsif terhadap perubahan waktu.
+- **Peta Choropleth Dinamis (Leaflet)**: Visualisasi spasial tingkat kenyamanan menggunakan basemap **OpenStreetMap (OSM)** yang responsif terhadap perubahan waktu.
 - **Grafik Tren Kenyamanan (Recharts)**: Diagram area bergradien warna dinamis sesuai kategori kenyamanan termal PET diiringi garis putus-putus (*dashed line*) untuk tren suhu udara (°C).
 - **Sinkronisasi Waktu Interaktif**: Mengklik titik mana pun pada grafik tren akan menyelaraskan jam aktif dasbor dan peta secara global.
 - **Toleransi Pencocokan Waktu (Fuzzy Matching)**: Penanganan ketidakcocokan waktu data BMKG melalui pencarian data terdekat dengan batas toleransi ±90 menit.
@@ -217,7 +217,7 @@ Aplikasi ini menggunakan teknologi Progressive Web App (PWA) untuk mendukung aks
     *   `IMAGE_CACHE` (`bali-pet-images-v1`): Menyimpan gambar objek wisata yang di-prefetch secara paralel di latar belakang.
     *   `API_CACHE` (`bali-pet-api-v1`): Menyimpan respons data JSON prakiraan cuaca dari Supabase REST API menggunakan strategi *Network-First falling back to Cache*.
 2.  **Penanganan Luring Komponen Peta**:
-    Service worker mengintersept kegagalan unduhan ubin peta Carto Voyager saat offline dan mengembalikan status `503 Service Unavailable` secara anggun alih-alih memicu uncaught promise rejection pada peta Leaflet.
+    Service worker mengintersept kegagalan unduhan ubin peta OpenStreetMap (OSM) saat offline dan mengembalikan status `503 Service Unavailable` secara anggun alih-alih memicu uncaught promise rejection pada peta Leaflet.
 3.  **Penanganan Luring WebSocket**:
     Hook monitoring batch data Supabase mendeteksi status `navigator.onLine` untuk secara dinamis melepas koneksi WebSocket saat offline untuk mencegah konsumsi berlebih pada konsol error peramban.
 

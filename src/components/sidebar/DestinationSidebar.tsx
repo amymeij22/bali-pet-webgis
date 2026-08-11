@@ -23,7 +23,6 @@ interface DestinationSidebarProps {
     destination_name: string;
     village_name: string;
     kdepum_code: string;
-    // Optional metadata (may exist in runtime payload even if TS type doesn't require it)
     district?: string | null;
     regency?: string | null;
   }>;
@@ -91,7 +90,6 @@ export default function DestinationSidebar({
 
   return (
     <>
-      {/* Backdrop mobile */}
       <AnimatePresence>
         {isMobile && isOpen && (
           <motion.div
@@ -104,20 +102,17 @@ export default function DestinationSidebar({
         )}
       </AnimatePresence>
 
-      {/* === SIDEBAR + TOGGLE CONTAINER === */}
       <motion.div
         className="fixed top-0 left-0 bottom-0 z-40 flex"
         animate={{ x: isOpen ? 0 : -sidebarWidth }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       >
-        {/* SIDEBAR */}
         <aside
           className={cn(
             'glass-panel flex flex-col rounded-r-2xl z-20',
             isMobile ? 'w-[220px]' : 'w-[264px]'
           )}
         >
-          {/* Header */}
           <div className="p-3 sm:p-4 border-b border-border/50">
             <div className="flex items-center gap-2 mb-1">
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-accent destination-header-icon" />
@@ -157,7 +152,6 @@ export default function DestinationSidebar({
             </div>
           </div>
 
-          {/* List */}
           <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
             {destinations.length === 0 ? (
               <div className="space-y-2 animate-pulse" data-testid="sidebar-shimmer">
@@ -232,7 +226,6 @@ export default function DestinationSidebar({
             )}
           </div>
 
-          {/* Footer */}
           <div className="p-2 border-t border-border/50 bg-secondary/30 text-center">
             <p className="text-[9px] sm:text-xs text-muted-foreground">
               {t('destinations_footer_hint')}
@@ -240,7 +233,6 @@ export default function DestinationSidebar({
           </div>
         </aside>
 
-        {/* TOGGLE BUTTON */}
         <button
           onClick={() => setIsOpen((v) => !v)}
           className="

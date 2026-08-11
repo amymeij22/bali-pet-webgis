@@ -70,7 +70,6 @@ export default function WeatherPopup({
   const { t, lang } = useI18n();
   const dfLocale = lang === 'en' ? enUS : id;
   const reduceMotion = useReducedMotion();
-  // Indexing is handled by parent now; we only navigate using provided time
   const ranges = PET_RANGES[standard];
 
   const [activeTab, setActiveTab] = useState<'current' | 'trend'>('current');
@@ -156,15 +155,13 @@ export default function WeatherPopup({
     );
   };
 
-  // Fallback hero image (WEBP) kalau dari DB kosong / gagal load.
   const HERO_FALLBACK_URL = '/image-fallback.webp';
   const desiredHeroSrcRaw = (heroImageUrl ?? '').trim();
   const desiredHeroSrc = useMemo(() => {
     const raw = desiredHeroSrcRaw;
     if (!raw) return HERO_FALLBACK_URL;
 
-    // If DB stores a signed Supabase Storage URL, try to normalize to public URL.
-    // This avoids expiry issues *if* the bucket is public.
+    // Normalisasi URL Supabase Storage
     if (raw.includes('/storage/v1/object/sign/')) {
       const noQuery = raw.split('?')[0];
       return noQuery.replace('/storage/v1/object/sign/', '/storage/v1/object/public/');
@@ -178,7 +175,6 @@ export default function WeatherPopup({
     setHeroSrc(desiredHeroSrc);
   }, [desiredHeroSrc]);
 
-  // Handle case when times array is empty (no batch data)
   const currentIndex = useMemo(() => {
     if (!times || times.length === 0) return -1;
     return times.findIndex((t) => t === currentTime);
@@ -194,13 +190,11 @@ export default function WeatherPopup({
     onTimeChange(times[currentIndex + 1]!);
   };
 
-  // Get current date/time from selected time or use current date
   const currentDate = currentTime ? toWitaDate(currentTime) : new Date();
 
-  // Compute category based on PET value and selected standard (if forecast exists)
   let category: ThermalCategory = 'neutral';
   let pet = 0;
-  let petColor = '#9ca3af'; // grey-400 for no data
+  let petColor = '#9ca3af';
   let petRange = PET_RANGES[standard]['neutral'];
 
   if (forecast) {
@@ -221,7 +215,7 @@ export default function WeatherPopup({
     const raw = (forecast?.wind_direction ?? '').trim();
     if (!raw) return null;
     const n = Number(raw);
-    if (!Number.isFinite(n)) return raw; // already textual (e.g. N, NE, Barat)
+    if (!Number.isFinite(n)) return raw;
     const deg = ((n % 360) + 360) % 360;
     const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
     const idx = Math.round(deg / 45) % 8;
@@ -231,11 +225,9 @@ export default function WeatherPopup({
   const visibilityDisplay = useMemo(() => {
     const raw = (forecast?.visibility ?? '').trim();
     if (!raw) return null;
-    // If the API already includes unit, keep it.
     if (/[a-zA-Z]/.test(raw)) return raw;
     const n = Number(raw);
     if (!Number.isFinite(n)) return raw;
-    // Heuristic: many weather visibilities are in km. Keep numeric and add unit gently.
     return `${n} km`;
   }, [forecast?.visibility]);
 

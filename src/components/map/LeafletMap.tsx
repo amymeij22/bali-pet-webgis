@@ -22,14 +22,12 @@ interface LeafletMapProps {
 const BALI_CENTER: [number, number] = [-8.4095, 115.1889];
 const BALI_ZOOM = 10;
 const GEOJSON_PATH = `${import.meta.env.BASE_URL}data/destinasi_wisata_bali.geojson`;
-// Batasi panning/scroll ke area Bali + sedikit tolerance.
-// Tujuan: mencegah user menggeser peta terlalu jauh dan mengurangi tile fetch/render yang tidak perlu.
-// Kira-kira mencakup Bali + Lombok Barat sedikit (timur) dan Jawa Timur ujung (barat).
+// Batasi panning/scroll ke area Bali dengan toleransi kecil.
 const BALI_BOUNDS: L.LatLngBoundsExpression = [
-  [-9.30, 114.30], // south-west (tolerance kecil)
-  [-7.30, 115.70], // north-east (tolerance kecil)
+  [-9.30, 114.30], // south-west
+  [-7.30, 115.70], // north-east
 ];
-// Strip any non-digit separators so both "51.03.05.1004" and "5103051004" match
+// Normalisasi KDEPUM
 const normalizeKdepum = (value?: string | null) => value?.replace(/\D/g, '').trim() || null;
 
 export default function LeafletMap({ selectedTime, petStandard, onVillageClick, highlightedVillage, highlightedKdepum, villagesByKdepum, choropleth }: LeafletMapProps) {
@@ -40,7 +38,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
   const [forecastData, setForecastData] = useState<Map<string, { pet_value: number }>>(new Map());
   const hasFittedBounds = useRef(false);
 
-  // Load GeoJSON
   useEffect(() => {
     fetch(GEOJSON_PATH)
       .then((res) => res.json())
@@ -50,12 +47,11 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       .catch((err) => console.error('Failed to load GeoJSON:', err));
   }, []);
 
-  // Update forecast data when choropleth changes
   useEffect(() => {
     setForecastData(choropleth);
   }, [choropleth]);
 
-  // Get village info from feature using KDEPUM (normalized)
+  // Ambil info desa dari feature KDEPUM
   const getVillageInfo = useCallback((feature: GeoJSON.Feature): { 
     id: string; 
     destinationName: string; 
@@ -81,32 +77,25 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     return info?.id ?? null;
   }, [getVillageInfo]);
 
-  // Get village name from feature (for display in tooltip/popup)
   const getVillageDisplayName = useCallback((feature: GeoJSON.Feature): string => {
     const props = feature.properties || {};
     const info = getVillageInfo(feature);
     if (info) {
-      // If multiple destinations, show village name + list of destinations
       if (info.destinations && info.destinations.length > 1) {
         return `${info.villageName}\n${info.destinations.map(d => `• ${d}`).join('\n')}`;
       }
-      // Single destination, show destination name
       return info.destinationName;
     }
     return props.WADMKD || props.NAMOBJ || props.DESA || props.KELURAHAN || props.NAMA || 'Unknown';
   }, [getVillageInfo]);
 
-  // Check if feature is a destination
-  // A feature is a destination if it has KDEPUM and matches a village in our database
-  // OR if it has KDEPUM (even if not in database, show it as grey)
+  // Validasi apakah feature memiliki KDEPUM
   const isDestination = useCallback((feature: GeoJSON.Feature): boolean => {
     const props = feature.properties || {};
     const raw: string | undefined = props.KDEPUM || props.kdepum || props.kdepum_code;
-    // If it has KDEPUM, it's a potential destination (show it even if not in database)
     return raw !== undefined && raw !== null && raw.trim() !== '';
   }, []);
 
-  // Style function for GeoJSON layer
   const getStyle = useCallback((feature: GeoJSON.Feature | undefined): L.PathOptions => {
     if (!feature) return { fillColor: '#cccccc', weight: 1, color: '#999999', fillOpacity: 0.3 };
 
@@ -115,15 +104,14 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     const rawKdepum: string | undefined = props.KDEPUM || props.kdepum || props.kdepum_code;
     const normalizedKdepum = rawKdepum ? rawKdepum.replace(/\D/g, '') : null;
     
-    // Highlight if villageId matches OR kdepum_code matches (for multiple destinations)
+    // Highlight jika ID atau kdepum cocok
     const isHighlighted = highlightedVillage === villageId || 
       (highlightedKdepum && (
         (rawKdepum && rawKdepum.trim() === highlightedKdepum.trim()) ||
         (normalizedKdepum && normalizedKdepum === highlightedKdepum.replace(/\D/g, ''))
       ));
     
-    // If feature has KDEPUM but not in database, show grey polygon
-    // (This means it's a destination polygon but not yet in our database)
+    // Tampilkan abu-abu jika destinasi belum terdaftar di DB
     if (!villageId && rawKdepum) {
       return {
         fillColor: '#9ca3af', // grey-400
@@ -147,7 +135,7 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
 
     const forecast = villageId ? forecastData.get(villageId) : undefined;
     
-    // If no forecast data, show grey polygon but still clickable
+    // Tampilkan abu-abu jika data prakiraan belum ada
     if (!forecast) {
       return {
         fillColor: '#9ca3af', // grey-400
@@ -170,7 +158,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     };
   }, [forecastData, highlightedVillage, highlightedKdepum, getVillageId, petStandard]);
 
-  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
@@ -186,14 +173,12 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       maxBoundsViscosity: 0.9,
     });
 
-    // Add OSM tile layer
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
       maxZoom: 18,
       crossOrigin: true,
     }).addTo(map.current);
 
-    // Add zoom control to bottom right
     L.control.zoom({ position: 'bottomright' }).addTo(map.current);
 
     return () => {
@@ -223,14 +208,11 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
         const props = feature.properties || {};
         const villageNameFromGeoJSON = props.WADMKD || props.NAMOBJ || props.DESA || props.KELURAHAN || 'Unknown';
 
-        // Show all destination polygons, even without forecast data or database match
         if (isDest) {
           const forecast = villageId ? forecastData.get(villageId) : undefined;
           const hasData = forecast !== undefined;
           
-          // If we have info from database, use it; otherwise use GeoJSON data
           if (info && villageId) {
-            // Tooltip on hover - show village name + destinations if multiple
             const tooltipText = info.destinations && info.destinations.length > 1
               ? `${info.villageName}<br/><small>${info.destinations.map(d => `• ${d}`).join('<br/>')}</small>${!hasData ? '<br/><small style="color: #9ca3af;">(Data belum tersedia)</small>' : ''}`
               : `${info.destinationName}${!hasData ? '<br/><small style="color: #9ca3af;">(Data belum tersedia)</small>' : ''}`;
@@ -241,7 +223,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
               className: 'bg-card text-card-foreground px-2 py-1 rounded-lg shadow-lg text-sm font-medium border border-border',
             });
 
-            // Click handler - pass village name as main if multiple destinations
             layer.on('click', () => {
               const displayName = info.destinations && info.destinations.length > 1
                 ? info.villageName
@@ -249,7 +230,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
               onVillageClick(villageId, displayName, info.villageName);
             });
           } else {
-            // No database match, but still show polygon with GeoJSON data
             const tooltipText = `${villageNameFromGeoJSON}<br/><small style="color: #9ca3af;">(Data belum tersedia)</small>`;
             
             layer.bindTooltip(tooltipText, {
@@ -258,13 +238,11 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
               className: 'bg-card text-card-foreground px-2 py-1 rounded-lg shadow-lg text-sm font-medium border border-border',
             });
 
-            // Click handler - use GeoJSON village name
             layer.on('click', () => {
               onVillageClick('', villageNameFromGeoJSON, villageNameFromGeoJSON);
             });
           }
 
-          // Hover effects
           layer.on('mouseover', (e) => {
             const target = e.target as L.Path;
             target.setStyle({
@@ -284,7 +262,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       },
     }).addTo(map.current);
 
-    // Fit bounds to destinations only (once on initial load)
     if (!hasFittedBounds.current) {
       const destinationBounds = L.latLngBounds([]);
       geoJsonData.features.forEach((feature) => {
@@ -297,7 +274,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
       if (destinationBounds.isValid()) {
         const isMobile = window.matchMedia('(max-width: 768px)').matches;
         if (isMobile) {
-          // Mobile: setView closer to the center of Bali so the map is larger (less zoomed-out)
           map.current.setView(BALI_CENTER, 9.5);
         } else {
           map.current.fitBounds(destinationBounds, {
@@ -309,7 +285,6 @@ export default function LeafletMap({ selectedTime, petStandard, onVillageClick, 
     }
   }, [geoJsonData, getStyle, getVillageId, onVillageClick, isDestination, getVillageInfo, villagesByKdepum, forecastData]);
 
-  // Update styles when forecast data, highlight, or PET standard changes
   useEffect(() => {
     if (geoJsonLayer.current && geoJsonData) {
       geoJsonLayer.current.setStyle((feature) => getStyle(feature as GeoJSON.Feature));
